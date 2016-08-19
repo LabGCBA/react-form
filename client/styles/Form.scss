@@ -1,0 +1,60 @@
+@import 'main';
+
+$rowHeight: 20px;
+
+
+.o-container--main form {
+  margin-top: 50px;
+}
+
+.grid-form {
+  div[data-row-span] {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  div[data-row-span] div[data-field-span] {
+    align-items: stretch;
+  }
+  div[data-row-span] div[data-field-span]:hover {
+    background: $accentLight;
+  }
+
+  input[type=text], input[type=email], input[type=url], input[type=tel] {
+    height: $rowHeight;
+  }
+
+  input[type=radio] {
+    margin-left: $rowHeight;
+  }
+
+  input[type=radio]:first-of-type {
+    margin-left: 0px;
+  }
+
+  label + select {
+    height: $rowHeight;
+    font-size: 14px;
+  }
+
+  label {
+    font-size: 15px;
+  }
+}
+
+.c-button--submit {
+  color: $foreground;
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  border: 1px solid $foreground;
+  border-radius: 0px;
+  width: 20vw;
+  margin-top: $rowHeight;
+  margin-bottom: 40px;
+}
+
+.c-button--submit:hover {
+  background: $foreground !important;
+  color: $background;
+}

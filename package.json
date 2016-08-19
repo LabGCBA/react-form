@@ -42,7 +42,10 @@
     "express": "4.13.4",
     "express-ejs-layouts": "2.0.0",
     "react": "0.14.6",
+    "react-burger-menu": "1.10.4",
     "react-dom": "0.14.6",
+    "react-gridforms": "1.0.2",
+    "react-router": "2.6.1",
     "webpack": "1.12.12"
   },
   "devDependencies": {
