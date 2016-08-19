@@ -41,6 +41,7 @@
     "ejs": "2.4.1",
     "express": "4.13.4",
     "express-ejs-layouts": "2.0.0",
+    "firebase": "3.3.0",
     "react": "0.14.6",
     "react-burger-menu": "1.10.4",
     "react-dom": "0.14.6",

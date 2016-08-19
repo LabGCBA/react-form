@@ -5,6 +5,8 @@ import 'styles/Form.scss';
 import 'styles/Menu.scss';
 import 'styles/main.scss';
 
+import 'config/firebase.js';
+
 import React from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router'
