@@ -10,7 +10,7 @@ const qwest = require('qwest');
 
 class FormComponent extends Component {
   constructor(props) {
-    super( props );
+    super(props);
 
     this.state = {
       YES_RADIO_New: {
@@ -73,11 +73,15 @@ class FormComponent extends Component {
     };
   }
 
-  toggleDisabled( disabled, otherClasses ) {
+  componentWillUnmount() {
+    firebase.off();
+  }
+
+  toggleDisabled(disabled, otherClasses) {
     return disabled ? 'disabled' : otherClasses;
   }
 
-  handleCheckbox( e ) {
+  handleCheckbox(e) {
     const split = e.target.id.split( '_' );
     var opposite;
 
@@ -98,6 +102,9 @@ class FormComponent extends Component {
 
     var data = serialize(e.target, { hash: true, empty: true });
 
+    if (data.materialDeSoporte.documentos.length > 0) data.materialDeSoporte.documentos = data.materialDeSoporte.documentos.split( /\r?\n/ );
+    if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
+
     const result = this.sendData(data);
     const backend = 'http://localhost:5000/mail';
 
@@ -108,9 +115,9 @@ class FormComponent extends Component {
         projectName: data.proyecto.nombre,
         projectRequestingArea: data.proyecto.areaSolicitante,
         projectDescription: data.requerimiento.descripcion
-    }, {
+      }, {
         cache: true
-    })
+      })
       .then(function(xhr, response) {
           alert('Formulario enviado exitosamente.');
       })
@@ -187,7 +194,6 @@ class FormComponent extends Component {
         disableInput: true
       }
     });
-
   }
 
   render() {
@@ -324,37 +330,37 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Restricciones</label>
-                <textarea name="detallesAdicicionales[restricciones]"></textarea>
+                <textarea name="detallesAdicionales[restricciones]"></textarea>
               </Field>
               <Field>
                 <label>Riesgos detectados</label>
-                <textarea name="detallesAdicicionales[riesgosDetectados]"></textarea>
+                <textarea name="detallesAdicionales[riesgosDetectados]"></textarea>
               </Field>
             </Row>
             <Row>
               <Field>
                 <label>Presupuesto asignado</label>
-                <input id="YES_RADIO_Budget" name="detallesAdicicionales[presupuestoAsignado][]" value={true} checked={this.state.YES_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="YES_RADIO_Budget" name="detallesAdicionales[presupuestoAsignado][]" value="Sí" checked={this.state.YES_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="YES_RADIO_Budget">Sí</label>
-                <input id="NO_RADIO_Budget"name="detallesAdicicionales[presupuestoAsignado][]"value={false} checked={this.state.NO_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="NO_RADIO_Budget"name="detallesAdicionales[presupuestoAsignado][]"value="No" checked={this.state.NO_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="NO_RADIO_Budget">No</label>
               </Field>
               <Field span={3} className={this.toggleDisabled(this.state.NO_RADIO_Budget.checked, 'required')}>
                 <label>Monto</label>
-                <input type="number" className="currency" name="detallesAdicicionales[presupuestoAsignado][]" required={true} min="0" step="0.01" disabled={this.state.NO_RADIO_Budget.checked}  required={this.state.YES_RADIO_Budget.checked}/>
+                <input type="number" className="currency" name="detallesAdicionales[presupuestoAsignado][]" required={true} min="0" step="0.01" disabled={this.state.NO_RADIO_Budget.checked}  required={this.state.YES_RADIO_Budget.checked}/>
               </Field>
             </Row>
             <Row>
               <Field>
                 <label>Requiere interacción con otras áreas o proyectos</label>
-                <input id="YES_RADIO_Interaction" name="detallesAdicicionales[requiereInteraccionConOtrasAreasOProyectos][]" value={true} checked={this.state.YES_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="YES_RADIO_Interaction" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" value="Sí" checked={this.state.YES_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="YES_RADIO_Interaction">Sí</label>
-                <input id="NO_RADIO_Interaction" name="detallesAdicicionales[requiereInteraccionConOtrasAreasOProyectos][]" value={false} checked={this.state.NO_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="NO_RADIO_Interaction" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" value="No" checked={this.state.NO_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="NO_RADIO_Interaction">No</label>
               </Field>
               <Field span={3} className={this.toggleDisabled(this.state.NO_RADIO_Interaction.checked, 'required')}>
                 <label>Describir</label>
-                <input type="text" name="detallesAdicicionales[requiereInteraccionConOtrasAreasOProyectos][]" disabled={this.state.NO_RADIO_Interaction.checked} required={this.state.YES_RADIO_Interaction.checked}/>
+                <input type="text" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" disabled={this.state.NO_RADIO_Interaction.checked} required={this.state.YES_RADIO_Interaction.checked}/>
               </Field>
             </Row>
           </Fieldset>
@@ -380,9 +386,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere hardware</label>
-                <input id="YES_RADIO_Hardware" name="materialDeSoporte[requiereHardware][]" value={true} checked={this.state.YES_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Hardware" name="materialDeSoporte[requiereHardware][]" value="Sí" checked={this.state.YES_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Hardware">Sí</label>
-                <input id="NO_RADIO_Hardware" name="materialDeSoporte[requiereHardware][]" value={false} checked={this.state.NO_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Hardware" name="materialDeSoporte[requiereHardware][]" value="No" checked={this.state.NO_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Hardware">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Hardware.checked)}>
@@ -394,9 +400,9 @@ class FormComponent extends Component {
               </Field>
               <Field>
                 <label>Requiere infraestructura</label>
-                <input id="YES_RADIO_Infrastructure" name="materialDeSoporte[requiereInfraestructura][]" value={true} checked={this.state.YES_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Infrastructure" name="materialDeSoporte[requiereInfraestructura][]" value="Sí" checked={this.state.YES_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Infrastructure">Sí</label>
-                <input id="NO_RADIO_Infrastructure" name="materialDeSoporte[requiereInfraestructura][]" value={false} checked={this.state.NO_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Infrastructure" name="materialDeSoporte[requiereInfraestructura][]" value="No" checked={this.state.NO_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Infrastructure">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Infrastructure.checked)}>
@@ -410,9 +416,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere webservices</label>
-                <input id="YES_RADIO_WebServices" name="materialDeSoporte[requiereWebServices][]" value={true} checked={this.state.YES_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_WebServices" name="materialDeSoporte[requiereWebServices][]" value="Sí" checked={this.state.YES_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_WebServices">Sí</label>
-                <input id="NO_RADIO_WebServices" name="materialDeSoporte[requiereWebServices][]" value={false} checked={this.state.NO_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_WebServices" name="materialDeSoporte[requiereWebServices][]" value="No" checked={this.state.NO_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_WebServices">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_WebServices.checked)}>
@@ -424,9 +430,9 @@ class FormComponent extends Component {
               </Field>
               <Field>
                 <label>Requiere diseño</label>
-                <input id="YES_RADIO_Design" name="materialDeSoporte[requiereDiseno][]" value={true} checked={this.state.YES_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Design" name="materialDeSoporte[requiereDiseno][]" value="Sí" checked={this.state.YES_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Design">Sí</label>
-                <input id="NO_RADIO_Design" name="materialDeSoporte[requiereDiseno][]" value={false} checked={this.state.NO_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Design" name="materialDeSoporte[requiereDiseno][]" value="No" checked={this.state.NO_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Design">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Design.checked)}>
@@ -440,9 +446,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere contenido</label>
-                <input id="YES_RADIO_Content" name="materialDeSoporte[requiereContenido][]" value={true} checked={this.state.YES_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Content" name="materialDeSoporte[requiereContenido][]" value="Sí" checked={this.state.YES_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Content">Sí</label>
-                <input id="NO_RADIO_Content" name="materialDeSoporte[requiereContenido][]" value={false} checked={this.state.NO_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Content" name="materialDeSoporte[requiereContenido][]" value="No" checked={this.state.NO_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Content">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Content.checked)}>
@@ -454,9 +460,9 @@ class FormComponent extends Component {
               </Field>
               <Field>
                 <label>Requiere instalación</label>
-                <input id="YES_RADIO_Installation" name="materialDeSoporte[requiereInstalacion][]" value={true} checked={this.state.YES_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Installation" name="materialDeSoporte[requiereInstalacion][]" value="Sí" checked={this.state.YES_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Installation">Sí</label>
-                <input id="NO_RADIO_Installation" name="materialDeSoporte[requiereInstalacion][]" value={false} checked={this.state.NO_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Installation" name="materialDeSoporte[requiereInstalacion][]" value="No" checked={this.state.NO_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Installation">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Installation.checked)}>

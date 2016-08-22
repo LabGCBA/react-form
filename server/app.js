@@ -27,8 +27,8 @@ app.post('/mail', function (req, res) {
 
     const options = {
         auth: {
-            api_user: 'demo',
-            api_key: 'demo'
+            api_user: 'formularioProyectos',
+            api_key: 'formularioProyectos123'
         }
     };
 

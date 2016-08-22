@@ -1,0 +1,21 @@
+label + span {
+  font-size: 18px;
+}
+
+.noItemsMessage {
+  color: #dddddd;
+  font-size: 50px;
+}
+
+.grid-form {
+  padding-bottom: 65px;
+  border-bottom: 1px dotted #333;
+}
+
+.grid-form:not(:first-of-type) {
+  page-break-before: always;
+}
+
+.grid-form:last-of-type {
+  border-bottom: none;
+}

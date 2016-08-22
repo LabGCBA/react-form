@@ -2,6 +2,11 @@
 
 $rowHeight: 20px;
 
+#proyectos {
+  border-bottom: none !important;
+  padding-bottom: 20px;
+}
+
 .grid-form {
   div[data-row-span] {
     display: flex;
@@ -12,7 +17,7 @@ $rowHeight: 20px;
     align-items: stretch;
   }
   div[data-row-span] div[data-field-span]:hover {
-    background: $accentLight;
+    background: $lightAccent;
   }
 
   input[type=text], input[type=email], input[type=url], input[type=tel] {
@@ -66,6 +71,7 @@ $rowHeight: 20px;
 
   label {
     font-size: 15px;
+    vertical-align: middle;
   }
 
   .disabled, .disabled:hover {
