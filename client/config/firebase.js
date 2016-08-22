@@ -1,6 +1,8 @@
-var firebase = require("firebase/app");
-require("firebase/auth");
-require("firebase/database");
+/*jshint esnext: true */
+
+var firebase = require( 'firebase/app' );
+require('firebase/auth');
+require('firebase/database');
 
 const config = {
     apiKey: "AIzaSyCOCjTMWrdR6DVmfrSePHg8vlgDh6eR6R8",
@@ -9,4 +11,4 @@ const config = {
     storageBucket: "formulario-proyectos.appspot.com",
   };
 
-firebase.initializeApp(config);
+export default firebase.initializeApp(config);

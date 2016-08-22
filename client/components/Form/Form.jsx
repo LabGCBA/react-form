@@ -2,8 +2,10 @@
 
 import React, { Component } from 'react';
 import { GridForm, Fieldset, Row, Field } from 'react-gridforms';
+import firebase from 'config/firebase';
 
 const serialize = require('form-serialize');
+const shortid = require('shortid');
 
 class FormComponent extends Component {
   constructor(props) {
@@ -112,14 +114,19 @@ class FormComponent extends Component {
 
   handleSubmit(e) {
     e.preventDefault();
-
-
     var data = serialize(e.target, { hash: true, empty: true });
 
     if (data.materialDeSoporte.documentos.length > 0) data.materialDeSoporte.documentos = data.materialDeSoporte.documentos.split( /\r?\n/ );
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
-    console.dir(data);
+    this.sendData(data);
+  }
+
+  sendData( data ) {
+    const id = shortid.generate();
+    const result = firebase.database().ref().push(data);
+
+    result.then((value) => { console.log('success!!!') });
   }
 
   render() {
@@ -137,13 +144,13 @@ class FormComponent extends Component {
               </Field>
               <Field span={2} className="required">
                 <label>Nombre</label>
-                <input type="text" id="TEXT_Nombre" name="proyecto[name]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="proyecto[name]" required={true} pattern="\S.*\S"/>
               </Field>
             </Row>
             <Row>
               <Field span={3} className="required">
                 <label>Área Solicitante</label>
-                <input type="text" id="TEXT_AreaSolicitante" name="proyecto[areaSolicitante]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="proyecto[areaSolicitante]" required={true} pattern="\S.*\S"/>
               </Field>
               <Field>
                 <label>Forma de contacto preferida</label>
