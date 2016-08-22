@@ -14,81 +14,61 @@ class FormComponent extends Component {
 
     this.state = {
       YES_RADIO_New: {
-        checked: true,
-        fieldset: 'proyecto'
+        checked: true
       },
       NO_RADIO_New: {
-        checked: false,
-        fieldset: 'proyecto'
+        checked: false
       },
       YES_RADIO_Budget: {
-        checked: false,
-        fieldset: 'detallesAdicionales'
+        checked: false
       },
       NO_RADIO_Budget: {
-        checked: true,
-        fieldset: 'detallesAdicionales'
+        checked: true
       },
       YES_RADIO_Interaction: {
-        checked: false,
-        fieldset: 'detallesAdicionales'
+        checked: false
       },
       NO_RADIO_Interaction: {
-        checked: true,
-        fieldset: 'detallesAdicionales'
+        checked: true
       },
       YES_RADIO_Hardware:{
-        checked: false,
-        fieldset: 'materialDeSoporte'
+        checked: false
       },
       NO_RADIO_Hardware: {
-        checked: true,
-        fieldset: 'materialDeSoporte'
+        checked: true
       },
       YES_RADIO_Infrastructure: {
-        checked: false,
-        fieldset: 'materialDeSoporte'
+        checked: false
       },
       NO_RADIO_Infrastructure: {
-        checked: true,
-        fieldset: 'materialDeSoporte'
+        checked: true
       },
       YES_RADIO_WebServices: {
-        checked: false,
-        fieldset: 'materialDeSoporte'
+        checked: false
       },
       NO_RADIO_WebServices: {
-        checked: true,
-        fieldset: 'materialDeSoporte'
+        checked: true
       },
       YES_RADIO_Design: {
-        checked: false,
-        fieldset: 'materialDeSoporte'
+        checked: false
       },
       NO_RADIO_Design: {
-        checked: true,
-        fieldset: 'materialDeSoporte'
+        checked: true
       },
       YES_RADIO_Content: {
-        checked: false,
-        fieldset: 'materialDeSoporte'
+        checked: false
       },
       NO_RADIO_Content: {
-        checked: true,
-        fieldset: 'materialDeSoporte'
+        checked: true
       },
       YES_RADIO_Installation: {
-        checked: false,
-        fieldset: 'materialDeSoporte'
+        checked: false
       },
       NO_RADIO_Installation: {
-        checked: true,
-        fieldset: 'materialDeSoporte'
+        checked: true
       },
       SELECT_Visibility: {
-        value: undefined,
-        hideInput: false,
-        fieldset: 'requerimiento'
+        disableInput: true
       }
     };
   }
@@ -109,8 +89,8 @@ class FormComponent extends Component {
   }
 
   handleDropdown(e) {
-    if (e.target.value !== 'Otro') this.setState({ [e.target.id]: { hideInput: false } });
-    else this.setState({ [e.target.id]: { hideInput: true } });
+    if (e.target.value !== 'Otro') this.setState({ [e.target.id]: { disableInput: true } });
+    else this.setState({ [e.target.id]: { disableInput: false } });
   }
 
   handleSubmit(e) {
@@ -118,14 +98,11 @@ class FormComponent extends Component {
 
     var data = serialize(e.target, { hash: true, empty: true });
 
-    if (data.materialDeSoporte.documentos.length > 0) data.materialDeSoporte.documentos = data.materialDeSoporte.documentos.split( /\r?\n/ );
-    if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
-
     const result = this.sendData(data);
     const backend = 'http://localhost:5000/mail';
 
     result.then((value) => {
-      document.getElementById("proyectos").reset();
+      this.resetForm();
 
       qwest.post(backend, {
         projectName: data.proyecto.nombre,
@@ -140,12 +117,77 @@ class FormComponent extends Component {
       .catch(function(e, xhr, response) {
         console.error(e);
       });
-      });
+    });
   }
 
-  sendData( data ) {
+  sendData(data) {
     const id = shortid.generate();
-    return firebase.database().ref().push(data);
+    return firebase.database().ref().child('/proyectos/').child(id).set(data);
+  }
+
+  resetForm() {
+    document.getElementById( "proyectos" ).reset();
+
+    this.setState( {
+      YES_RADIO_New: {
+        checked: true
+      },
+      NO_RADIO_New: {
+        checked: false
+      },
+      YES_RADIO_Budget: {
+        checked: false
+      },
+      NO_RADIO_Budget: {
+        checked: true
+      },
+      YES_RADIO_Interaction: {
+        checked: false
+      },
+      NO_RADIO_Interaction: {
+        checked: true
+      },
+      YES_RADIO_Hardware:{
+        checked: false
+      },
+      NO_RADIO_Hardware: {
+        checked: true
+      },
+      YES_RADIO_Infrastructure: {
+        checked: false
+      },
+      NO_RADIO_Infrastructure: {
+        checked: true
+      },
+      YES_RADIO_WebServices: {
+        checked: false
+      },
+      NO_RADIO_WebServices: {
+        checked: true
+      },
+      YES_RADIO_Design: {
+        checked: false
+      },
+      NO_RADIO_Design: {
+        checked: true
+      },
+      YES_RADIO_Content: {
+        checked: false
+      },
+      NO_RADIO_Content: {
+        checked: true
+      },
+      YES_RADIO_Installation: {
+        checked: false
+      },
+      NO_RADIO_Installation: {
+        checked: true
+      },
+      SELECT_Visibility: {
+        disableInput: true
+      }
+    });
+
   }
 
   render() {
@@ -260,7 +302,7 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Visibilidad</label>
-                <select id="SELECT_Visibility" name="requerimiento[visibilidad][]" onChange={this.handleDropdown.bind(this)} value={this.state.SELECT_Visibility.value}>
+                <select id="SELECT_Visibility" name="requerimiento[visibilidad][]" onChange={this.handleDropdown.bind(this)}>
                   <option value="Ciudadanos" title="Ciudadanos">Ciudadanos</option>
                   <option value="Gobierno" title="Gobierno">Gobierno</option>
                   <option value="Ministerio" title="Ministerio">Ministerio</option>
@@ -270,9 +312,9 @@ class FormComponent extends Component {
                   <option value="Otro" title="Otro">Otro</option>
                 </select>
               </Field>
-              <Field span={2} className={this.toggleDisabled(!this.state.SELECT_Visibility.hideInput, 'required')}>
+              <Field span={2} className={this.toggleDisabled(this.state.SELECT_Visibility.disableInput, 'required')}>
                 <label>Otro</label>
-                <input type="text" name="requerimiento[visibilidad][]" required={!this.state.SELECT_Visibility.hideInput} disabled={!this.state.SELECT_Visibility.hideInput} />
+                <input type="text" name="requerimiento[visibilidad][]" required={!this.state.SELECT_Visibility.disableInput} disabled={this.state.SELECT_Visibility.disableInput} />
               </Field>
             </Row>
           </Fieldset>

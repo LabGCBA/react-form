@@ -12,12 +12,13 @@ import { render } from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router'
 
 import Index from 'components/Index/Index';
+import Nuevo from 'components/Nuevo/Nuevo';
 import NotFound from 'components/NotFound/NotFound';
 
 render((
   <Router history={browserHistory}>
-    <Route path="/" component={NotFound}/>
-    <Route path="/nuevo" component={Index}/>
+    <Route path="/" component={Index}/>
+    <Route path="/nuevo" component={Nuevo}/>
     <Route path="*"s component={NotFound}/>
   </Router>
 ), document.getElementById('js-main'));

@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
+import { GridForm, Fieldset, Row, Field } from 'react-gridforms';
 
+import Form from 'components/Form/Form';
 import Menu from 'components/Menu/Menu';
-import Listado from 'components/Listado/Listado';
 
-class IndexComponent extends Component {
+class NuevoComponent extends Component {
   constructor() {
     super();
   }
@@ -13,11 +14,11 @@ class IndexComponent extends Component {
       <div>
         <Menu width={200} id={"sidebar"}></Menu>
         <div className="o-container o-container--large o-container--main">
-          <Listado></Listado>
+          <Form></Form>
         </div>
       </div>
     );
   }
 }
 
-export default IndexComponent;
+export default NuevoComponent;

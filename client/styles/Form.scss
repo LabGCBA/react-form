@@ -2,11 +2,6 @@
 
 $rowHeight: 20px;
 
-
-.o-container--main form {
-  margin-top: 50px;
-}
-
 .grid-form {
   div[data-row-span] {
     display: flex;
@@ -44,6 +39,23 @@ $rowHeight: 20px;
     box-shadow: none;
   }
 
+  a:focus, a:active,
+  button::-moz-focus-inner,
+  input[type="reset"]::-moz-focus-inner,
+  input[type="button"]::-moz-focus-inner,
+  input[type="submit"]::-moz-focus-inner,
+  select::-moz-focus-inner,
+  input[type="file"] > input[type="button"]::-moz-focus-inner {
+      border: 0;
+      outline : 0;
+  }
+
+  textarea {
+    max-width: 100%;
+    max-height: 100%;
+    font-family: $fontStack;
+  }
+
   label + select {
     height: $rowHeight;
     font-size: 14px;
@@ -51,12 +63,6 @@ $rowHeight: 20px;
 
   label {
     font-size: 15px;
-  }
-
-  textarea {
-    max-width: 100%;
-    max-height: 100%;
-    font-family: $fontStack;
   }
 
   .disabled, .disabled:hover {
@@ -112,15 +118,4 @@ $rowHeight: 20px;
   border-color: $foreground;
   background: $background;
   color: $foreground;
-}
-
-a:focus, a:active,
-button::-moz-focus-inner,
-input[type="reset"]::-moz-focus-inner,
-input[type="button"]::-moz-focus-inner,
-input[type="submit"]::-moz-focus-inner,
-select::-moz-focus-inner,
-input[type="file"] > input[type="button"]::-moz-focus-inner {
-    border: 0;
-    outline : 0;
 }
