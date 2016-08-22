@@ -6,6 +6,7 @@ import firebase from 'config/firebase';
 
 const serialize = require('form-serialize');
 const shortid = require('shortid');
+const qwest = require('qwest');
 
 class FormComponent extends Component {
   constructor(props) {
@@ -114,19 +115,37 @@ class FormComponent extends Component {
 
   handleSubmit(e) {
     e.preventDefault();
+
     var data = serialize(e.target, { hash: true, empty: true });
 
     if (data.materialDeSoporte.documentos.length > 0) data.materialDeSoporte.documentos = data.materialDeSoporte.documentos.split( /\r?\n/ );
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
-    this.sendData(data);
+    const result = this.sendData(data);
+    const backend = 'http://localhost:5000/mail';
+
+    result.then((value) => {
+      document.getElementById("proyectos").reset();
+
+      qwest.post(backend, {
+        projectName: data.proyecto.nombre,
+        projectRequestingArea: data.proyecto.areaSolicitante,
+        projectDescription: data.requerimiento.descripcion
+    }, {
+        cache: true
+    })
+      .then(function(xhr, response) {
+          alert('Formulario enviado exitosamente.');
+      })
+      .catch(function(e, xhr, response) {
+        console.error(e);
+      });
+      });
   }
 
   sendData( data ) {
     const id = shortid.generate();
-    const result = firebase.database().ref().push(data);
-
-    result.then((value) => { console.log('success!!!') });
+    return firebase.database().ref().push(data);
   }
 
   render() {
@@ -144,13 +163,13 @@ class FormComponent extends Component {
               </Field>
               <Field span={2} className="required">
                 <label>Nombre</label>
-                <input type="text" name="proyecto[name]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="proyecto[nombre]" required={true} pattern=".*\S+.*"/>
               </Field>
             </Row>
             <Row>
               <Field span={3} className="required">
                 <label>Área Solicitante</label>
-                <input type="text" name="proyecto[areaSolicitante]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="proyecto[areaSolicitante]" required={true} pattern=".*\S+.*"/>
               </Field>
               <Field>
                 <label>Forma de contacto preferida</label>
@@ -168,17 +187,17 @@ class FormComponent extends Component {
             <Row>
               <Field span={2} className="required">
                 <label>Nombre y Apellido</label>
-                <input type="text" name="contacto[nombreYApellido]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="contacto[nombreYApellido]" required={true} pattern=".*\S+.*"/>
               </Field>
               <Field className="required">
                 <label>Cargo</label>
-                <input type="text" name="contacto[cargo]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="contacto[cargo]" required={true} pattern=".*\S+.*"/>
               </Field>
             </Row>
             <Row>
               <Field span={2} className="required">
                 <label>Teléfono</label>
-                <input type="tel" name="contacto[telefono]" required={true} pattern="\S.*\S"/>
+                <input type="tel" name="contacto[telefono]" required={true} pattern=".*\S+.*"/>
               </Field>
               <Field className="required">
                 <label>Interno</label>
@@ -192,7 +211,7 @@ class FormComponent extends Component {
             <Row>
               <Field span={3} className="required">
                 <label>Dirección</label>
-                <input type="text" name="contacto[direccion]" required={true} pattern="\S.*\S"/>
+                <input type="text" name="contacto[direccion]" required={true} pattern=".*\S+.*"/>
               </Field>
               <Field className="required">
                 <label>Compromiso en horas</label>
@@ -229,13 +248,13 @@ class FormComponent extends Component {
             <Row>
               <Field className="required">
                 <label>Descripción</label>
-                <textarea name="requerimiento[descripcion]" required={true} pattern="\S.*\S"></textarea>
+                <textarea name="requerimiento[descripcion]" required={true} pattern=".*\S+.*"></textarea>
               </Field>
             </Row>
             <Row>
               <Field className="required">
                 <label>Especificación de funciones</label>
-                <textarea name="requerimiento[especificacionDeFunciones]" required={true} pattern="\S.*\S"></textarea>
+                <textarea name="requerimiento[especificacionDeFunciones]" required={true} pattern=".*\S+.*"></textarea>
               </Field>
             </Row>
             <Row>
