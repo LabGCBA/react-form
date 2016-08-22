@@ -22,13 +22,13 @@ app.options('/mail', function (req, res) {
 
 
 app.post('/mail', function (req, res) {
-    const recipient = 'zeta@widcket.com';
+    const recipient = 'laboratoriogobab@gmail.com';
     const sender = 'laboratoriogobab@gmail.com';
 
     const options = {
         auth: {
-            api_user: 'formularioProyectos',
-            api_key: 'formularioProyectos123'
+            api_user: 'demo',
+            api_key: 'demo'
         }
     };
 
