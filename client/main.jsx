@@ -1,7 +1,7 @@
 'use strict';
 
 import 'styles/blaze.min.css';
-import 'styles/Form.scss';
+import 'styles/gridforms.scss';
 import 'styles/Menu.scss';
 import 'styles/main.scss';
 

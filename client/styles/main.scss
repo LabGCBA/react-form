@@ -3,8 +3,9 @@
 body {
   background: $background;
   font-family: $fontStack;
+  height: 100%;
 }
 
-.o-container--main {
-  margin-top: 50px;
+.grid-form {
+  padding-top: 50px;
 }

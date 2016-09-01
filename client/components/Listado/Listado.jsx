@@ -1,24 +1,39 @@
-import React, { Component } from 'react';
+/*jshint esnext: true */
 
+import 'styles/Listado.scss';
+
+import React, { Component } from 'react';
 import Menu from 'components/Menu/Menu';
 import ListItem from 'components/ListItem/ListItem';
-import firebase from 'config/firebase';
-
-import 'styles/Listado.css';
 
 class ListadoComponent extends Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
-    firebase.database().ref().child('/proyectos/').once('value').then(function(snapshot) {
-      console.dir(snapshot.val());
-    });
+    this.state = {items: []};
+  }
+
+  componentDidMount() {
+    this.props.items.then(function(result) {
+      this.setState({items: result});
+    }.bind(this));
   }
 
   render() {
+    if (this.state.items) {
+      var listItems = this.state.items.map(function(element) {
+        return (
+          <ListItem element={element} key={element.key}></ListItem>
+        );
+      });
+    }
+    else {
+      var listItems = <div class="u-absolute-center"><h1 className='noItemsMessage'>No hay proyectos cargados</h1></div>
+    }
+
     return (
       <div>
-        <ListItem></ListItem>
+        {listItems}
       </div>
     );
   }
