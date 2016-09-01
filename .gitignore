@@ -3,4 +3,8 @@ npm-debug.log
 .idea/
 coverage/
 dist
+config
 assets.json
+token.json
+credentials.json
+.DS_Store
