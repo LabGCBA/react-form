@@ -5,8 +5,13 @@ const app = express();
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const fs = require('fs');
+const path = require('path');
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
+const google = require('googleapis');
+const drive = google.drive('v3');
+const auth = require(path.join(__dirname, 'modules', 'drive'));
+
 
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
@@ -20,15 +25,14 @@ app.options('/mail', function (req, res) {
     res.sendStatus(200);
 });
 
-
 app.post('/mail', function (req, res) {
-    const recipient = 'zeta@widcket.com';
+    const recipient = 'laboratoriogobab@gmail.com';
     const sender = 'laboratoriogobab@gmail.com';
 
     const options = {
         auth: {
             api_user: 'demo',
-            api_key: 'demo'
+            api_key: 'demo'
         }
     };
 
