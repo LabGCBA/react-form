@@ -70,14 +70,16 @@ class FormComponent extends Component {
       },
       SELECT_Visibility: {
         disableInput: true
-      },
-      nombreProyecto: ''
+      }
     };
 
     this.state = this.initialState;
     this.mailBackend = 'http://localhost:5000/mail';
     this.fileBackend = 'http://localhost:5000/upload';
-    this.files = [];
+    this.nombreProyecto = '';
+    this.diagram = '';
+    this.documents = [];
+    this.dropzone = {};
 
     this.dropzoneConfig = {
       acceptedFiles: [
@@ -91,7 +93,9 @@ class FormComponent extends Component {
       // This one receives the dropzone object as the first parameter
       // and can be used to additional work with the dropzone.js
       // object
-      init: null,
+      init: (dropzone) => {
+        this.dropzone = dropzone;
+      },
       // All of these receive the event as first parameter:
       drop: null,
       dragstart: null,
@@ -102,17 +106,19 @@ class FormComponent extends Component {
       // All of these receive the file as first parameter:
       addedfile: null,
       removedfile: (file) => {
-        if (this.state.nombreProyecto.trim().length > 0) {
+        if (this.nombreProyecto.trim().length > 0) {
           qwest.delete(this.fileBackend, {
-            projectName: this.state.nombreProyecto,
+            projectName: this.nombreProyecto,
             fileName: file.name
           })
-          .then(() => console.log("Sent delete request"))
+          .then(() => {
+            if (this.documents.indexOf(file.name) > -1) {
+              this.documents.splice(this.documents.indexOf(file.name), 1);
+            }
+          })
           .catch(function(e, xhr, response) {
             console.error(e);
           });
-          
-          console.dir(file);
         }
       },
       thumbnail: null,
@@ -120,8 +126,10 @@ class FormComponent extends Component {
       processing: null,
       uploadprogress: null,
       sending: (file, xhr, formData) => {
-        if (this.state.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.state.nombreProyecto);
+        if (this.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.nombreProyecto);
         else formData.append('nombreProyecto', 'unknown');
+
+        this.documents.push(file.name);
       },
       success: null,
       complete: null,
@@ -195,6 +203,8 @@ class FormComponent extends Component {
 
     var data = serialize(e.target, { hash: true, empty: true });
 
+    console.dir(data);
+
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
     const result = this.sendData(data);
@@ -219,7 +229,7 @@ class FormComponent extends Component {
   }
 
   handleNombreProyecto(e) {
-    this.state.nombreProyecto = e.target.value;
+    this.nombreProyecto = e.target.value;
   }
 
   sendData(data) {
@@ -231,6 +241,7 @@ class FormComponent extends Component {
     document.getElementById( "proyectos" ).reset();
 
     this.setState(this.initialState);
+    this.dropzone.removeAllFiles();
   }
 
   render() {

@@ -101,7 +101,7 @@ app.post('/upload', function(req, res) {
 
     const searchFolder = function(pageToken, pageFn, callback) {
         drive.files.list({
-            q: "mimeType='application/vnd.google-apps.folder' AND trashed=false",
+            q: "mimeType='application/vnd.google-apps.folder' and trashed=false",
             fields: 'nextPageToken, files(id, name)',
             spaces: 'drive',
             pageToken: pageToken
@@ -190,7 +190,6 @@ app.delete('/upload', function(req, res) {
     var fileId;
 
     const searchFile = function(pageToken, pageFn, callback) {
-
         var query = "trashed = false and '" + req.body.projectName + "' in parents and name = '" + req.body.fileName + "' and (mimeType not contains 'folder')";
         var compiledQuery = () => query.toString();
 
@@ -201,11 +200,9 @@ app.delete('/upload', function(req, res) {
             pageToken: pageToken
         }, function(err, res) {
             if (err) {
-                console.log("error en searchfile");
                 callback(err);
             } else {
                 fileId = res.files[0].id;
-
                 callback(null, fileId);
             }
         });
@@ -217,7 +214,7 @@ app.delete('/upload', function(req, res) {
         }, function(err, resp) {
             if (err) console.error(err);
             else {
-                console.log('File ' + req.body.fileName + ' deleted from Google Drive');
+                console.log('File \'' + req.body.fileName + '\' deleted from Google Drive');
             }
         });
     }
