@@ -13,7 +13,10 @@ const oauth2Client = new OAuth2(config.web.client_id, config.web.client_secret, 
 google.options({ auth: oauth2Client });
 
 oauth2Client.setCredentials({  
-  access_token: token
+  access_token: token.access_token,
+  token_type: token.token_type,
+  refresh_token: token.refresh_token,
+  expiry_date: token.expiry_date
 });
 
 module.exports = oauth2Client;

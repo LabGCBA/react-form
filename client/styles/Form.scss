@@ -65,6 +65,10 @@ $rowHeight: 20px;
     font-family: $fontStack;
   }
 
+  div[data-row-span="1"] textarea {
+    width: inherit !important;
+  }
+
   label + select {
     height: $rowHeight;
     font-size: 14px;
@@ -103,6 +107,32 @@ $rowHeight: 20px;
     color: $foreground;
     content: '$';
     float: left;
+  }
+
+  .filepicker {
+    border-radius: 0px;
+    min-height: 100px;
+    font-size: 15px;
+    color: $foreground;
+    height: 100px;
+    line-height: 25px;
+    background-color: white;
+  }
+
+  .filepicker:hover {
+    background: #fefefa;
+  }
+
+  .filepicker .dz-remove, 
+  .filepicker .dz-remove:active, 
+  .filepicker .dz-remove:link, 
+  .filepicker .dz-remove:visited {
+    color: $foreground;
+    font-size: 10px;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-top: -3px;
   }
 }
 

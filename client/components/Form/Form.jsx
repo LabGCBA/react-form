@@ -3,6 +3,7 @@
 import React, { Component } from 'react';
 import { GridForm, Fieldset, Row, Field } from 'react-gridforms';
 import firebase from 'config/firebase';
+import DropzoneComponent from 'react-dropzone-component';
 
 const serialize = require('form-serialize');
 const shortid = require('shortid');
@@ -12,7 +13,7 @@ class FormComponent extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
+    this.initialState = {
       YES_RADIO_New: {
         checked: true
       },
@@ -69,7 +70,99 @@ class FormComponent extends Component {
       },
       SELECT_Visibility: {
         disableInput: true
-      }
+      },
+      nombreProyecto: ''
+    };
+
+    this.state = this.initialState;
+    this.mailBackend = 'http://localhost:5000/mail';
+    this.fileBackend = 'http://localhost:5000/upload';
+    this.files = [];
+
+    this.dropzoneConfig = {
+      acceptedFiles: [
+        '.rar', '.zip', '.jpg', '.png', '.docx', '.doc', '.xls', '.xlsx', '.ppt', '.pptx', '.pdf'
+        ],
+      showFiletypeIcon: false,
+      postUrl: this.fileBackend //TODO: Replace this
+    };
+
+    this.dropzoneEventHandlers = {
+      // This one receives the dropzone object as the first parameter
+      // and can be used to additional work with the dropzone.js
+      // object
+      init: null,
+      // All of these receive the event as first parameter:
+      drop: null,
+      dragstart: null,
+      dragend: null,
+      dragenter: null,
+      dragover: null,
+      dragleave: null,
+      // All of these receive the file as first parameter:
+      addedfile: null,
+      removedfile: (file) => {
+        if (this.state.nombreProyecto.trim().length > 0) {
+          qwest.delete(this.fileBackend, {
+            projectName: this.state.nombreProyecto,
+            fileName: file.name
+          })
+          .then(() => console.log("Sent delete request"))
+          .catch(function(e, xhr, response) {
+            console.error(e);
+          });
+          
+          console.dir(file);
+        }
+      },
+      thumbnail: null,
+      error: null,
+      processing: null,
+      uploadprogress: null,
+      sending: (file, xhr, formData) => {
+        if (this.state.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.state.nombreProyecto);
+        else formData.append('nombreProyecto', 'unknown');
+      },
+      success: null,
+      complete: null,
+      canceled: null,
+      maxfilesreached: null,
+      maxfilesexceeded: null,
+      // All of these receive a list of files as first parameter
+      // and are only called if the uploadMultiple option
+      // in djsConfig is true:
+      processingmultiple: null,
+      sendingmultiple: null,
+      successmultiple: null,
+      completemultiple: null,
+      canceledmultiple: null,
+      // Special Events
+      totaluploadprogress: null,
+      reset: null,
+      queuecomplete: null
+    };
+
+    this.dropzoneJSConfig = {
+      addRemoveLinks: true,
+      uploadMultiple: false,
+      maxfilesize: 200,
+      maxFiles: 1,
+      dictDefaultMessage: 'Arrastrar un archivo aquí (o hacer click para buscarlo)',
+      dictCancelUpload: 'Cancelar',
+      dictCancelUploadConfirmation: 'Cancelar la subida?',
+      dictRemoveFile: 'Sacar',
+      dictInvalidFileType: 'Ese tipo de archivo no está permitido'
+    };
+
+    this.dropzoneJSConfigMulti = {
+      addRemoveLinks: true,
+      uploadMultiple: true,
+      maxfilesize: 200,
+      dictDefaultMessage: 'Arrastrar archivos aquí (o hacer click para buscarlos)',
+      dictCancelUpload: 'Cancelar',
+      dictCancelUploadConfirmation: 'Cancelar la subida?',
+      dictRemoveFile: 'Quitar',
+      dictInvalidFileType: 'Ese tipo de archivo no está permitido'
     };
   }
 
@@ -102,16 +195,14 @@ class FormComponent extends Component {
 
     var data = serialize(e.target, { hash: true, empty: true });
 
-    if (data.materialDeSoporte.documentos.length > 0) data.materialDeSoporte.documentos = data.materialDeSoporte.documentos.split( /\r?\n/ );
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
     const result = this.sendData(data);
-    const backend = 'http://localhost:5000/mail';
-
+    
     result.then((value) => {
       this.resetForm();
 
-      qwest.post(backend, {
+      qwest.post(this.mailBackend, {
         projectName: data.proyecto.nombre,
         projectRequestingArea: data.proyecto.areaSolicitante,
         projectDescription: data.requerimiento.descripcion
@@ -127,6 +218,10 @@ class FormComponent extends Component {
     });
   }
 
+  handleNombreProyecto(e) {
+    this.state.nombreProyecto = e.target.value;
+  }
+
   sendData(data) {
     const id = shortid.generate();
     return firebase.database().ref().child('/proyectos/').child(id).set(data);
@@ -135,65 +230,7 @@ class FormComponent extends Component {
   resetForm() {
     document.getElementById( "proyectos" ).reset();
 
-    this.setState( {
-      YES_RADIO_New: {
-        checked: true
-      },
-      NO_RADIO_New: {
-        checked: false
-      },
-      YES_RADIO_Budget: {
-        checked: false
-      },
-      NO_RADIO_Budget: {
-        checked: true
-      },
-      YES_RADIO_Interaction: {
-        checked: false
-      },
-      NO_RADIO_Interaction: {
-        checked: true
-      },
-      YES_RADIO_Hardware:{
-        checked: false
-      },
-      NO_RADIO_Hardware: {
-        checked: true
-      },
-      YES_RADIO_Infrastructure: {
-        checked: false
-      },
-      NO_RADIO_Infrastructure: {
-        checked: true
-      },
-      YES_RADIO_WebServices: {
-        checked: false
-      },
-      NO_RADIO_WebServices: {
-        checked: true
-      },
-      YES_RADIO_Design: {
-        checked: false
-      },
-      NO_RADIO_Design: {
-        checked: true
-      },
-      YES_RADIO_Content: {
-        checked: false
-      },
-      NO_RADIO_Content: {
-        checked: true
-      },
-      YES_RADIO_Installation: {
-        checked: false
-      },
-      NO_RADIO_Installation: {
-        checked: true
-      },
-      SELECT_Visibility: {
-        disableInput: true
-      }
-    });
+    this.setState(this.initialState);
   }
 
   render() {
@@ -211,7 +248,7 @@ class FormComponent extends Component {
               </Field>
               <Field span={2} className="required">
                 <label>Nombre</label>
-                <input type="text" name="proyecto[nombre]" required={true} pattern=".*\S+.*"/>
+                <input type="text" name="proyecto[nombre]" required={true} pattern=".*\S+.*" onKeyUp={this.handleNombreProyecto.bind(this)}/>
               </Field>
             </Row>
             <Row>
@@ -368,16 +405,16 @@ class FormComponent extends Component {
           <br />
           <Fieldset legend="Material de soporte">
             <Row>
-              <Field>
+              <Field span={2}>
                 <label>Diagrama</label>
-                <input type="url" name="materialDeSoporte[diagrama]"/>
+                <DropzoneComponent config={this.dropzoneConfig} eventHandlers={this.dropzoneEventHandlers} djsConfig={this.dropzoneJSConfig} />
+              </Field>
+              <Field span={2}>
+                <label>Documentos</label>
+                <DropzoneComponent config={this.dropzoneConfig} eventHandlers={this.dropzoneEventHandlers} djsConfig={this.dropzoneJSConfigMulti} />
               </Field>
             </Row>
             <Row>
-              <Field>
-                <label>Documentos</label>
-                <textarea name="materialDeSoporte[documentos]"></textarea>
-              </Field>
               <Field>
                 <label>Links</label>
                 <textarea name="materialDeSoporte[links]"></textarea>

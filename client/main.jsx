@@ -2,6 +2,7 @@
 
 import 'styles/blaze.min.css';
 import 'styles/gridforms.scss';
+import 'styles/filepicker.css';
 import 'styles/Menu.scss';
 import 'styles/main.scss';
 
