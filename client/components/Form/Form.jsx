@@ -79,13 +79,15 @@ class FormComponent extends Component {
     this.nombreProyecto = '';
     this.diagram = '';
     this.documents = [];
+    this.dropzones = [];
 
     this.dropzoneConfig = {
       acceptedFiles: [
         '.rar', '.zip', '.jpg', '.png', '.docx', '.doc', '.xls', '.xlsx', '.ppt', '.pptx', '.pdf'
         ],
       showFiletypeIcon: false,
-      postUrl: this.fileBackend 
+      postUrl: this.fileBackend,
+      init: (dropzone) => this.dropzones.push(dropzone)
     };
 
     this.dropzoneDiagramEventHandlers = {
@@ -223,7 +225,13 @@ class FormComponent extends Component {
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
     const result = this.sendData(data);
-    
+
+    document.getElementById("proyectos").reset();
+    this.setState(this.initialState);
+    this.dropzones.forEach(function(dropzone) {
+      dropzone.removeAllFiles();
+    }, this);
+
     result.then((value) => {
       qwest.post(this.mailBackend, {
         data: data,
@@ -232,7 +240,6 @@ class FormComponent extends Component {
       })
       .then(function(xhr, response) {
         alert('Formulario enviado exitosamente.');
-        this.resetForm();
       })
       .catch(function(e, xhr, response) {
         alert('Hubo un error. No se pudo enviar el formulario.');
@@ -248,13 +255,6 @@ class FormComponent extends Component {
   sendData(data) {
     const id = shortid.generate();
     return firebase.database().ref().child('/proyectos/').child(id).set(data);
-  }
-
-  resetForm() {
-    document.getElementById( "proyectos" ).reset();
-
-    this.setState(this.initialState);
-    this.dropzone.removeAllFiles();
   }
 
   render() {

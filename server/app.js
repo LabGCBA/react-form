@@ -68,7 +68,7 @@ app.post('/mail', function(req, res) {
     const email = {
         from: sender,
         to: recipient,
-        subject: 'Nuevo Proyecto: ' + req.body.projectName,
+        subject: req.body['data[proyecto][nombre]'],
         html: emailString
     };
 
@@ -77,7 +77,7 @@ app.post('/mail', function(req, res) {
             console.error(err);
             res.sendStatus(500);
         } else {
-            console.log('Message sent: ' + req.body.projectName);
+            console.log('Message sent: ' + req.body['data[proyecto][nombre]']);
             res.sendStatus(200);
         }
     });
@@ -151,6 +151,7 @@ app.post('/upload', function(req, res) {
                         if (filesUploaded === files.length) {
                             res.sendStatus(201);
                         }
+                        else res.sendStatus(500);
                     };
                 });
             } else {
@@ -211,9 +212,13 @@ app.delete('/upload', function(req, res) {
         drive.files.delete({
             'fileId': fileId
         }, function(err, resp) {
-            if (err) console.error(err);
+            if (err) {
+                console.error(err);
+                res.sendStatus(500);
+            }
             else {
                 console.log('File \'' + req.body.fileName + '\' deleted from Google Drive');
+                res.sendStatus(200);
             }
         });
     }
