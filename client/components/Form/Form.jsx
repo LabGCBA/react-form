@@ -86,11 +86,11 @@ class FormComponent extends Component {
         '.rar', '.zip', '.jpg', '.png', '.docx', '.doc', '.xls', '.xlsx', '.ppt', '.pptx', '.pdf'
         ],
       showFiletypeIcon: false,
-      postUrl: this.fileBackend,
-      init: (dropzone) => this.dropzones.push(dropzone)
+      postUrl: this.fileBackend
     };
 
     this.dropzoneDiagramEventHandlers = {
+      init: (dropzone) => this.dropzones.push(dropzone),
       // All of these receive the event as first parameter:
       drop: null,
       dragstart: null,
@@ -121,17 +121,19 @@ class FormComponent extends Component {
       reset: null,
       queuecomplete: null,
       removedfile: (file) => {
-        if (this.nombreProyecto.trim().length > 0) {
-          qwest.delete(this.fileBackend, {
-            projectName: this.nombreProyecto,
-            fileName: file.name
-          })
-          .then(() => {
-            if (this.diagram === filename) this.diagram = '';
-          })
-          .catch(function(e, xhr, response) {
-            console.error(e);
-          });
+        if (this.documents.indexOf(file.name) === -1 && (this.diagram !== file.name)) {
+            if (this.nombreProyecto.trim().length > 0) {
+              qwest.delete(this.fileBackend, {
+                projectName: this.nombreProyecto,
+                fileName: file.name
+              })
+              .then(() => {
+                if (this.diagram === filename) this.diagram = '';
+              })
+              .catch(function(e, xhr, response) {
+                console.error(e);
+              });
+          }
         }
       },
       sending: (file, xhr, formData) => {
@@ -143,6 +145,7 @@ class FormComponent extends Component {
     };
 
     this.dropzoneDocsEventHandlers = {
+      init: (dropzone) => this.dropzones.push(dropzone),
       removedfile: (file) => {
         if (this.nombreProyecto.trim().length > 0) {
           qwest.delete(this.fileBackend, {
@@ -221,7 +224,6 @@ class FormComponent extends Component {
     
     data.materialDeSoporte.diagrama = this.diagram;
     data.materialDeSoporte.documentos = this.documents.join('\n');
-
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
     const result = this.sendData(data);
@@ -231,6 +233,8 @@ class FormComponent extends Component {
     this.dropzones.forEach(function(dropzone) {
       dropzone.removeAllFiles();
     }, this);
+    this.diagram = '';
+    this.documents = [];
 
     result.then((value) => {
       qwest.post(this.mailBackend, {
