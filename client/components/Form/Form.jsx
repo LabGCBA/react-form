@@ -74,28 +74,21 @@ class FormComponent extends Component {
     };
 
     this.state = this.initialState;
-    this.mailBackend = 'http://localhost:5000/mail';
-    this.fileBackend = 'http://localhost:5000/upload';
+    this.mailBackend = 'http://localhost:5000/mail'; //TODO: Replace this
+    this.fileBackend = 'http://localhost:5000/upload'; //TODO: Replace this
     this.nombreProyecto = '';
     this.diagram = '';
     this.documents = [];
-    this.dropzone = {};
 
     this.dropzoneConfig = {
       acceptedFiles: [
         '.rar', '.zip', '.jpg', '.png', '.docx', '.doc', '.xls', '.xlsx', '.ppt', '.pptx', '.pdf'
         ],
       showFiletypeIcon: false,
-      postUrl: this.fileBackend //TODO: Replace this
+      postUrl: this.fileBackend 
     };
 
-    this.dropzoneEventHandlers = {
-      // This one receives the dropzone object as the first parameter
-      // and can be used to additional work with the dropzone.js
-      // object
-      init: (dropzone) => {
-        this.dropzone = dropzone;
-      },
+    this.dropzoneDiagramEventHandlers = {
       // All of these receive the event as first parameter:
       drop: null,
       dragstart: null,
@@ -105,6 +98,49 @@ class FormComponent extends Component {
       dragleave: null,
       // All of these receive the file as first parameter:
       addedfile: null,
+      thumbnail: null,
+      error: null,
+      processing: null,
+      uploadprogress: null,   
+      success: null,
+      complete: null,
+      canceled: null,
+      maxfilesreached: null,
+      maxfilesexceeded: null,
+      // All of these receive a list of files as first parameter
+      // and are only called if the uploadMultiple option
+      // in djsConfig is true:
+      processingmultiple: null,
+      successmultiple: null,
+      completemultiple: null,
+      canceledmultiple: null,
+      // Special Events
+      totaluploadprogress: null,
+      reset: null,
+      queuecomplete: null,
+      removedfile: (file) => {
+        if (this.nombreProyecto.trim().length > 0) {
+          qwest.delete(this.fileBackend, {
+            projectName: this.nombreProyecto,
+            fileName: file.name
+          })
+          .then(() => {
+            if (this.diagram === filename) this.diagram = '';
+          })
+          .catch(function(e, xhr, response) {
+            console.error(e);
+          });
+        }
+      },
+      sending: (file, xhr, formData) => {
+        if (this.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.nombreProyecto);
+        else formData.append('nombreProyecto', 'unknown');
+
+        this.diagram = file.name;
+      }
+    };
+
+    this.dropzoneDocsEventHandlers = {
       removedfile: (file) => {
         if (this.nombreProyecto.trim().length > 0) {
           qwest.delete(this.fileBackend, {
@@ -121,40 +157,20 @@ class FormComponent extends Component {
           });
         }
       },
-      thumbnail: null,
-      error: null,
-      processing: null,
-      uploadprogress: null,
       sending: (file, xhr, formData) => {
         if (this.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.nombreProyecto);
         else formData.append('nombreProyecto', 'unknown');
-
-        this.documents.push(file.name);
       },
-      success: null,
-      complete: null,
-      canceled: null,
-      maxfilesreached: null,
-      maxfilesexceeded: null,
-      // All of these receive a list of files as first parameter
-      // and are only called if the uploadMultiple option
-      // in djsConfig is true:
-      processingmultiple: null,
-      sendingmultiple: null,
-      successmultiple: null,
-      completemultiple: null,
-      canceledmultiple: null,
-      // Special Events
-      totaluploadprogress: null,
-      reset: null,
-      queuecomplete: null
+      sendingmultiple: (files, xhr, formData) => {
+        files.forEach(function(file) {
+          this.documents.push(file.name);
+        }, this);
+      },
     };
 
-    this.dropzoneJSConfig = {
-      addRemoveLinks: true,
-      uploadMultiple: false,
+    this.dropzoneJSConfigBase = {
       maxfilesize: 200,
-      maxFiles: 1,
+      addRemoveLinks: true,
       dictDefaultMessage: 'Arrastrar un archivo aquí (o hacer click para buscarlo)',
       dictCancelUpload: 'Cancelar',
       dictCancelUploadConfirmation: 'Cancelar la subida?',
@@ -162,16 +178,14 @@ class FormComponent extends Component {
       dictInvalidFileType: 'Ese tipo de archivo no está permitido'
     };
 
-    this.dropzoneJSConfigMulti = {
-      addRemoveLinks: true,
-      uploadMultiple: true,
-      maxfilesize: 200,
-      dictDefaultMessage: 'Arrastrar archivos aquí (o hacer click para buscarlos)',
-      dictCancelUpload: 'Cancelar',
-      dictCancelUploadConfirmation: 'Cancelar la subida?',
-      dictRemoveFile: 'Quitar',
-      dictInvalidFileType: 'Ese tipo de archivo no está permitido'
-    };
+    this.dropzoneJSConfig = Object.assign({}, this.dropzoneJSConfigBase, {
+      uploadMultiple: false,
+      maxFiles: 1,
+    });
+
+    this.dropzoneJSConfigMulti = Object.assign({}, this.dropzoneJSConfigBase, {
+      uploadMultiple: true
+    });
   }
 
   componentWillUnmount() {
@@ -202,16 +216,15 @@ class FormComponent extends Component {
     e.preventDefault();
 
     var data = serialize(e.target, { hash: true, empty: true });
-
-    console.dir(data);
+    
+    data.materialDeSoporte.diagrama = this.diagram;
+    data.materialDeSoporte.documentos = this.documents.join('\n');
 
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
     const result = this.sendData(data);
     
     result.then((value) => {
-      this.resetForm();
-
       qwest.post(this.mailBackend, {
         projectName: data.proyecto.nombre,
         projectRequestingArea: data.proyecto.areaSolicitante,
@@ -220,9 +233,11 @@ class FormComponent extends Component {
         cache: true
       })
       .then(function(xhr, response) {
-          alert('Formulario enviado exitosamente.');
+        alert('Formulario enviado exitosamente.');
+        this.resetForm();
       })
       .catch(function(e, xhr, response) {
+        alert('Hubo un error. No se pudo enviar el formulario.');
         console.error(e);
       });
     });
@@ -418,11 +433,11 @@ class FormComponent extends Component {
             <Row>
               <Field span={2}>
                 <label>Diagrama</label>
-                <DropzoneComponent config={this.dropzoneConfig} eventHandlers={this.dropzoneEventHandlers} djsConfig={this.dropzoneJSConfig} />
+                <DropzoneComponent config={this.dropzoneConfig} eventHandlers={this.dropzoneDiagramEventHandlers} djsConfig={this.dropzoneJSConfig} />
               </Field>
               <Field span={2}>
                 <label>Documentos</label>
-                <DropzoneComponent config={this.dropzoneConfig} eventHandlers={this.dropzoneEventHandlers} djsConfig={this.dropzoneJSConfigMulti} />
+                <DropzoneComponent config={this.dropzoneConfig} eventHandlers={this.dropzoneDocsEventHandlers} djsConfig={this.dropzoneJSConfigMulti} />
               </Field>
             </Row>
             <Row>

@@ -77,6 +77,7 @@ app.post('/mail', function(req, res) {
     client.sendMail(email, function(err, info) {
         if (err) {
             console.error(err);
+            res.sendStatus(500);
         } else {
             console.log('Message sent: ' + req.body.projectName);
             res.sendStatus(200);
