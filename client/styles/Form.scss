@@ -114,9 +114,10 @@ $rowHeight: 20px;
     min-height: 100px;
     font-size: 15px;
     color: $foreground;
-    height: 100px;
+    height: auto;
     line-height: 25px;
     background-color: white;
+    padding: 0px 0px 15px 0px !important;
   }
 
   .filepicker:hover {

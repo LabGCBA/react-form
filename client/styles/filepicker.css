@@ -393,6 +393,7 @@ div.filepicker {
     vertical-align: top;
     min-height: 65px;
     height: 65px;
+    margin-top: 12px;
 }
 
 .dropzone .dz-preview:hover {
