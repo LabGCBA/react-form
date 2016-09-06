@@ -62,9 +62,7 @@ app.post('/mail', function(req, res) {
     const client = nodemailer.createTransport(sgTransport(options));
     const templateString = fs.readFileSync('views/email.ejs', 'utf-8');
     const emailString = ejs.render(templateString, {
-        projectName: req.body.projectName,
-        projectRequestingArea: req.body.projectRequestingArea,
-        projectDescription: req.body.projectDescription
+        data: req.body
     });
 
     const email = {

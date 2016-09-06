@@ -226,9 +226,7 @@ class FormComponent extends Component {
     
     result.then((value) => {
       qwest.post(this.mailBackend, {
-        projectName: data.proyecto.nombre,
-        projectRequestingArea: data.proyecto.areaSolicitante,
-        projectDescription: data.requerimiento.descripcion
+        data: data,
       }, {
         cache: true
       })
