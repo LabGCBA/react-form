@@ -155,6 +155,9 @@ app.post('/upload', function(req, res) {
                             filesUploaded = 0;
 
                             res.sendStatus(201);
+                            setTimeout(function(){ 
+                                cleanup(); 
+                            }, 180000);
                         }
                     };
                 });
@@ -162,7 +165,6 @@ app.post('/upload', function(req, res) {
                 res.sendStatus(415);
             }
         });
-
     }
 
     if (!tempFolderId) {

@@ -221,7 +221,6 @@ class FormComponent extends Component {
     data.materialDeSoporte.documentos = this.documents.join('\n');
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
-    console.dir(data);
     const result = this.sendData(data);
 
     this.formSent = true;
@@ -238,7 +237,7 @@ class FormComponent extends Component {
       qwest.post(this.mailBackend, {
         data: data,
       }, {
-        cache: true
+        cache: false
       })
       .then(function(xhr, response) {
         this.formSent = false;
