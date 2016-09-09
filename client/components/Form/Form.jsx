@@ -221,33 +221,32 @@ class FormComponent extends Component {
     data.materialDeSoporte.documentos = this.documents.join('\n');
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
-    const result = this.sendData(data);
-
     this.formSent = true;
 
-    document.getElementById("proyectos").reset();
-    this.setState(this.initialState);
     this.dropzones.forEach(function(dropzone) {
       dropzone.removeAllFiles();
     }, this);
+    document.getElementById("proyectos").reset();
+    this.setState(this.initialState);
     this.diagram = '';
     this.documents = [];
 
-    result.then((value) => {
+    this.sendData(data).then((value) => {
       qwest.post(this.mailBackend, {
         data: data,
       }, {
         cache: false
       })
       .then(function(xhr, response) {
-        this.formSent = false;
         alert('Formulario enviado exitosamente.');
+
+        this.formSent = false;
       })
       .catch(function(e, xhr, response) {
-        this.formSent = false;
-        console.error(e);
-
         alert('Hubo un error. No se pudo enviar el formulario.');
+
+        console.error(e);
+        this.formSent = false;
       });
     });
   }

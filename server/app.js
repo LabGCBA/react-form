@@ -29,6 +29,11 @@ const allowedMimetypes = [
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/pdf'
 ];
+const cleanup = function() {
+    tempFolderParents = '';
+    tempFolderId = undefined;
+    fileIds = [];
+};
 
 var tempFolderParents;
 var tempFolderId;
@@ -75,13 +80,6 @@ app.post('/mail', function(req, res) {
         subject: req.body['data[proyecto][nombre]'],
         html: emailString
     };
-
-    const cleanup = function() {
-        tempFolderParents = '';
-        tempFolderId = undefined;
-        fileIds = [];
-    };
-
 
     client.sendMail(email, function(err, info) {
         if (err) {
@@ -225,19 +223,15 @@ app.delete('/upload', function(req, res) {
             if (err) {
                 console.error('Error al borrar el archivo');
                 console.error(err);
-                errorResponseSent = true;
+
                 res.sendStatus(500);
             } else {
                 const fileIndex = fileIds.indexOf(fileId);
 
                 if (fileIndex > -1) fileIds.splice(fileIndex, 1);
-                else {
-                    console.log('fileIndex not found on files array');
-                    if (!errorResponseSent) res.sendStatus(500);
-                };
 
                 console.log('File \'' + req.body.fileName + '\' deleted from Google Drive');
-                if (!errorResponseSent) res.sendStatus(200);
+                res.sendStatus(200);
             }
         });
     }
