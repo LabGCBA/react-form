@@ -30,6 +30,10 @@ const allowedMimetypes = [
     'application/pdf'
 ];
 
+var tempFolderParents;
+var tempFolderId;
+var fileIds = [];
+
 
 app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -72,14 +76,37 @@ app.post('/mail', function(req, res) {
         html: emailString
     };
 
+    const cleanup = function() {
+        tempFolderParents = '';
+        tempFolderId = undefined;
+        fileIds = [];
+    };
+
+
     client.sendMail(email, function(err, info) {
         if (err) {
+            console.error('Error al enviar el mail')
             console.error(err);
-            res.sendStatus(500);
         } else {
             console.log('Message sent: ' + req.body['data[proyecto][nombre]']);
+        }
+    });
+
+    drive.files.update({
+        fileId: tempFolderId,
+        resource: {'name': req.body['data[proyecto][nombre]']},
+        fields: 'id'
+    }, function(err, file) {
+        if (err) {
+            console.error('Error al renombrar la carpeta temporal');
+            console.error(err);
+
+            res.sendStatus(500);
+        } else {
             res.sendStatus(200);
         }
+
+        cleanup();
     });
 });
 
@@ -89,42 +116,13 @@ app.options('/upload', function(req, res) {
 });
 
 app.post('/upload', function(req, res) {
-    var projectFolderId;
-
     if (!req.files) {
         res.send('No files were uploaded.');
         return;
     }
 
     const files = Object.keys(req.files);
-
-    const searchFolder = function(pageToken, pageFn, callback) {
-        drive.files.list({
-            q: "mimeType='application/vnd.google-apps.folder' and trashed=false",
-            fields: 'nextPageToken, files(id, name)',
-            spaces: 'drive',
-            pageToken: pageToken
-        }, function(err, res) {
-            if (err) {
-                callback(err);
-            } else {
-                res.files.some(function(file) {
-                    if (file.name === req.body.nombreProyecto) {
-                        projectFolderId = file.id;
-
-                        return true;
-                    }
-                });
-
-                if (res.nextPageToken) {
-                    console.log("Page token", res.nextPageToken);
-                    pageFn(res.nextPageToken, pageFn, callback);
-                } else {
-                    callback(null, projectFolderId);
-                }
-            }
-        });
-    };
+    var found = false;
 
     const uploadFiles = function(files, folderId) {
         var filesUploaded = 0;
@@ -141,48 +139,56 @@ app.post('/upload', function(req, res) {
                         mimeType: req.files[element].mimetype,
                         body: req.files[element].data
                     }
-                }, function(err) {
-                    if (err) console.error(err);
-                    else {
+                }, function(err, file) {
+                    if (err) {
+                        console.log('Error en la subida de archivos');
+                        console.error(err);
+
+                        res.sendStatus(500);
+                    } else {
                         filesUploaded++;
+                        fileIds.push(file.id);
 
                         console.log('File \'' + req.files[element].name + '\' uploaded to Google Drive');
 
                         if (filesUploaded === files.length) {
+                            filesUploaded = 0;
+
                             res.sendStatus(201);
                         }
-                        else res.sendStatus(500);
                     };
                 });
             } else {
                 res.sendStatus(415);
             }
         });
+
     }
 
-    searchFolder(null, searchFolder, function(err, projectFolderId) {
-        if (err) {
-            console.error(err);
-        } else if (projectFolderId) {
-            uploadFiles(files, projectFolderId);
-        } else {
-            drive.files.create({
-                resource: {
-                    name: req.body.nombreProyecto,
-                    mimeType: 'application/vnd.google-apps.folder',
-                    parents: [mainFolderId],
-                },
-                fields: 'id'
-            }, function(err, folder) {
-                if (err) {
-                    console.error('Error creando la carpeta');
-                    console.error(err);
-                } else {
-                    uploadFiles(files, folder.id);
-                }
-            });
-        }
-    });
+    if (!tempFolderId) {
+        drive.files.create({
+            resource: {
+                name: 'temp',
+                mimeType: 'application/vnd.google-apps.folder',
+                parents: [mainFolderId],
+            },
+            fields: 'id'
+        }, function(err, folder) {
+            if (err) {
+                console.error('Error creando la carpeta');
+                console.error(err);
+            } else {
+                console.log('Carpeta temporal creada');
+                tempFolderId = folder.id;
+                console.log('tempFolderId: ' + tempFolderId);
+                uploadFiles(files, tempFolderId);
+            }
+        });
+    } else {
+        console.log('La carpeta temporal ya existe');
+        console.log('tempFolderId: ' + tempFolderId);
+        uploadFiles(files, tempFolderId);
+    };
 });
 
 app.delete('/upload', function(req, res) {
@@ -190,7 +196,7 @@ app.delete('/upload', function(req, res) {
     var fileId;
 
     const searchFile = function(pageToken, pageFn, callback) {
-        var query = "trashed = false and '" + req.body.projectName + "' in parents and name = '" + req.body.fileName + "' and (mimeType not contains 'folder')";
+        var query = "trashed = false and '" + tempFolderId + "' in parents and name = '" + req.body.fileName + "' and (mimeType not contains 'folder')";
         var compiledQuery = () => query.toString();
 
         drive.files.list({
@@ -209,27 +215,41 @@ app.delete('/upload', function(req, res) {
     };
 
     const deleteFile = function(fileId) {
+        var errorResponseSent = false;
+
         drive.files.delete({
             'fileId': fileId
         }, function(err, resp) {
             if (err) {
+                console.error('Error al borrar el archivo');
                 console.error(err);
+                errorResponseSent = true;
                 res.sendStatus(500);
-            }
-            else {
+            } else {
+                const fileIndex = fileIds.indexOf(fileId);
+
+                if (fileIndex > -1) fileIds.splice(fileIndex, 1);
+                else {
+                    console.log('fileIndex not found on files array');
+                    if (!errorResponseSent) res.sendStatus(500);
+                };
+
                 console.log('File \'' + req.body.fileName + '\' deleted from Google Drive');
-                res.sendStatus(200);
+                if (!errorResponseSent) res.sendStatus(200);
             }
         });
     }
 
-    searchFile(null, searchFile, function(err, fileId) {
-        if (err) {
-            console.error(err);
-        } else if (fileId) {
-            deleteFile(fileId);
-        }
-    });
+    if (!req.body.formSent && tempFolderId) {
+        searchFile(null, searchFile, function(err, fileId) {
+            if (err) {
+                console.error('Error al buscar archivo para borrar');
+                console.error(err);
+            } else if (fileId) {
+                deleteFile(fileId);
+            }
+        });
+    }
 });
 
 app.listen(5000, function() {

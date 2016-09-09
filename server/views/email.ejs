@@ -132,7 +132,7 @@
                       <h2 style="font-family: Helvetica, Arial, sans-serif; font-size: 22px; font-weight: bold; margin: 0; margin-bottom: 10px;"><%= data['data[proyecto][nombre]'] %></h2>
                       <h3 style="font-family: Helvetica, Arial, sans-serif; color: #999999; text-transform: uppercase; font-size: 17px; font-weight: normal; margin: 0; margin-bottom: 15px;"><%= data['data[proyecto][areaSolicitante]'] %></h3>
                       <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;">
-                        <%= data['data[requerimiento][descripcion]'] %>
+                        <%= data['data[requerimiento][descripcion]']%>
                       </p>
                       <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Tipo: </strong>
                         <%= data['data[proyecto][tipo]'] %>
@@ -185,6 +185,55 @@
                       </p>
                       <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Visibilidad: </strong>
                         <%= data['data[requerimiento][visibilidad][]'] %>
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">
+                      <h2 style="font-family: Helvetica, Arial, sans-serif; font-size: 17px; font-weight: bold; margin: 0; margin-bottom: 10px; margin-top: 10px;">Detalles Adicionales</h2>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Restricciones: </strong>
+                        <%= data['data[detallesAdicionales][restricciones]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Riesgos: </strong>
+                        <%= data['data[detallesAdicionales][riesgos]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Presupuesto asignado: </strong>
+                        <%= data['data[detallesAdicionales][presupuestoAsignado][]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere interacción con otras áreas o proyectos: </strong>
+                        <%= data['data[detallesAdicionales][requiereInteraccionConOtrasAreasOProyectos][]'] %>
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-family: sans-serif; font-size: 14px; vertical-align: top;" valign="top">
+                      <h2 style="font-family: Helvetica, Arial, sans-serif; font-size: 17px; font-weight: bold; margin: 0; margin-bottom: 10px; margin-top: 10px;">Material de Soporte</h2>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Diagrama: </strong>
+                        <%= data['data[materialDeSoporte][diagrama]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Documentos: </strong>
+                        <%= data['data[materialDeSoporte][documentos]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Links: </strong>
+                        <%= data['data[materialDeSoporte][links]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere hardware: </strong>
+                        <%= data['data[materialDeSoporte][requiereHardware][]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere infraestructura: </strong>
+                        <%= data['data[materialDeSoporte][requiereInfraestructura][]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere webservices: </strong>
+                        <%= data['data[materialDeSoporte][requiereWebServices][]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere diseño: </strong>
+                        <%= data['data[materialDeSoporte][requiereDiseno][]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere contenido: </strong>
+                        <%= data['data[materialDeSoporte][requiereContenido][]'] %>
+                      </p>
+                      <p style="font-family: Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; margin: 0; margin-bottom: 15px;"><strong>Requiere instalación: </strong>
+                        <%= data['data[materialDeSoporte][requiereInstalacion][]'] %>
                       </p>
                     </td>
                   </tr>

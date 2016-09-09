@@ -80,6 +80,7 @@ class FormComponent extends Component {
     this.diagram = '';
     this.documents = [];
     this.dropzones = [];
+    this.formSent = false;
 
     this.dropzoneConfig = {
       acceptedFiles: [
@@ -104,7 +105,6 @@ class FormComponent extends Component {
       error: null,
       processing: null,
       uploadprogress: null,   
-      success: null,
       complete: null,
       canceled: null,
       maxfilesreached: null,
@@ -121,25 +121,23 @@ class FormComponent extends Component {
       reset: null,
       queuecomplete: null,
       removedfile: (file) => {
-        if (this.documents.indexOf(file.name) === -1 && (this.diagram !== file.name)) {
-            if (this.nombreProyecto.trim().length > 0) {
-              qwest.delete(this.fileBackend, {
-                projectName: this.nombreProyecto,
-                fileName: file.name
-              })
-              .then(() => {
-                if (this.diagram === filename) this.diagram = '';
-              })
-              .catch(function(e, xhr, response) {
-                console.error(e);
-              });
-          }
+        if (!this.formSent) {
+            qwest.delete(this.fileBackend, {
+              projectName: this.nombreProyecto,
+              fileName: file.name,
+              formSent: this.formSent
+            })
+            .then((xhr, res) => {
+              if (this.diagram === filename) this.diagram = '';
+              else this.documents.splice(this.documents.indexOf(file.name), 1);
+            })
+            .catch(function(e, xhr, response) {
+              console.error('Error removing file');
+              console.error(e);
+            });
         }
       },
-      sending: (file, xhr, formData) => {
-        if (this.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.nombreProyecto);
-        else formData.append('nombreProyecto', 'unknown');
-
+      success: (file) => {
         this.diagram = file.name;
       }
     };
@@ -147,7 +145,7 @@ class FormComponent extends Component {
     this.dropzoneDocsEventHandlers = {
       init: (dropzone) => this.dropzones.push(dropzone),
       removedfile: (file) => {
-        if (this.nombreProyecto.trim().length > 0) {
+        if (!this.formSent) {
           qwest.delete(this.fileBackend, {
             projectName: this.nombreProyecto,
             fileName: file.name
@@ -158,15 +156,12 @@ class FormComponent extends Component {
             }
           })
           .catch(function(e, xhr, response) {
+            console.error('Error removing file');
             console.error(e);
           });
         }
       },
-      sending: (file, xhr, formData) => {
-        if (this.nombreProyecto.trim().length > 0) formData.append('nombreProyecto', this.nombreProyecto);
-        else formData.append('nombreProyecto', 'unknown');
-      },
-      sendingmultiple: (files, xhr, formData) => {
+      successmultiple: (files) => {
         files.forEach(function(file) {
           this.documents.push(file.name);
         }, this);
@@ -226,7 +221,10 @@ class FormComponent extends Component {
     data.materialDeSoporte.documentos = this.documents.join('\n');
     if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
 
+    console.dir(data);
     const result = this.sendData(data);
+
+    this.formSent = true;
 
     document.getElementById("proyectos").reset();
     this.setState(this.initialState);
@@ -243,17 +241,33 @@ class FormComponent extends Component {
         cache: true
       })
       .then(function(xhr, response) {
+        this.formSent = false;
         alert('Formulario enviado exitosamente.');
       })
       .catch(function(e, xhr, response) {
-        alert('Hubo un error. No se pudo enviar el formulario.');
+        this.formSent = false;
         console.error(e);
+
+        alert('Hubo un error. No se pudo enviar el formulario.');
       });
     });
   }
 
   handleNombreProyecto(e) {
     this.nombreProyecto = e.target.value;
+  }
+
+  handleClose(e) {
+    if (this.documents.length > 0 || this.diagram !== '') {
+      confirm('No se ha enviado el formulario. Seguro que desea cerrar la pestaña?');
+
+      qwest.post(this.fileBackend, {
+        all: true,
+      })
+      .then(function(xhr, response) {
+
+      });
+    }
   }
 
   sendData(data) {
