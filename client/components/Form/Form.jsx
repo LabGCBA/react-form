@@ -241,13 +241,14 @@ class FormComponent extends Component {
         alert('Formulario enviado exitosamente.');
 
         this.formSent = false;
-      })
+      }.bind(this))
       .catch(function(e, xhr, response) {
         alert('Hubo un error. No se pudo enviar el formulario.');
 
         console.error(e);
+        console.dir(response);
         this.formSent = false;
-      });
+      }.bind(this));
     });
   }
 

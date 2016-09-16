@@ -103,8 +103,6 @@ const parseData = (data) => {
         }
     }
 
-    console.dir(result);
-
     return result;
 };
 const renderData = (data) => {
