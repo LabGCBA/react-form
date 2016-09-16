@@ -11,8 +11,19 @@ const request = require('request');
 
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
+const sendEmail = (client, email, projectName) => {
+    client.sendMail(email, function(err, info) {
+        if (err) {
+            console.error('Error al enviar el mail')
+            console.error(err);
+        } else {
+            console.log('Message sent: ' + projectName);
+        }
+    });
+};
 
 const fileUpload = require('express-fileupload');
+const excelExport = require('excel-export-es6');
 const google = require('googleapis');
 const auth = require(path.join(__dirname, 'modules', 'drive'));
 const mainFolderId = '0B9JlDEI5e4b-U2lHQngxbDFROEk';
@@ -73,28 +84,7 @@ const parseData = (data) => {
 
             if (keys[keys.length - 1] === '') keys.pop();
             if (result[keys[0]]) {
-                const length = data[property].length;
-                var counter = 0;
-                var content = data[property].split(' ');
-
-                content.forEach(function(element, i) {
-                    counter += element.length;
-
-                    if (element === '') {
-                        content.splice(i, 1);
-                    }
-                    else {
-                        if (counter > 80) {
-                            content[i] = element + '\n';
-                            counter = 0;
-                        }
-                    }
-                }, this);
-
-                content = content.join(' ');
-
-                result[keys[0]].push([keys[1], content]);
-                // result[keys[0]].push([keys[1], data[property]]);
+                result[keys[0]].push([keys[1], data[property]]);
             } else {
                 result[keys[0]] = [];
             };
@@ -103,12 +93,11 @@ const parseData = (data) => {
 
     return result;
 };
-const renderData = (data) => {
+const renderData = (parsedData) => {
     var result = '';
-    var parsedData = parseData(data);
 
     for (var property in parsedData) {
-        if (parsedData.hasOwnProperty(property)) {            
+        if (parsedData.hasOwnProperty(property)) {
             result += '\n\n' + property + '\n\n';
             parsedData[property].forEach(function(element) {
                 result += element[0] + ': ' + element[1] + '\n';
@@ -118,8 +107,7 @@ const renderData = (data) => {
 
     return result;
 };
-
-const postTask = (data) => {
+const postTask = (rawData, parsedData) => {
     const tasklistId = '964678';
     const projectId = '303503';
     const userId = '234141';
@@ -127,26 +115,133 @@ const postTask = (data) => {
     const payload = {
         json: {
             "todo-item": {
-                "content": data['data[proyecto][nombre]'],
+                "content": rawData['data[proyecto][nombre]'],
                 "responsible-party-id": userId,
                 "notify": true,
-                "description": renderData(data),
+                "description": renderData(parsedData),
                 "positionAfterTask": -1
             }
         }
     };
     const requestData = teamworkRequest('POST', path, payload);
 
-    var req = request(requestData, function (err, res, body) {
+    var req = request(requestData, function(err, res, body) {
         if (err) {
             console.error('Error al enviar la task a TeamWork: ', err);
-        }
-        else {
-            if (body['STATUS'] === 'OK') console.log('Proyecto enviado a TeamWork.');
+        } else {
+            if (body['STATUS'] === 'OK') console.log('Proyecto enviado a TeamWork');
             else console.error('Error al enviar la task a TeamWork: ', body['STATUS']);
         }
     });
 };
+
+const generateExcelFile = (rawData, parsedData) => {
+    var data = [];
+
+    for (var property in parsedData) {
+        if (parsedData.hasOwnProperty(property)) {
+            if (data.length > 0) {
+                data.push(['', '']);
+                data.push(['', '']);
+            }
+
+            data.push([property, '']);
+            data.push(['', '']);
+
+            parsedData[property].forEach(function(element) {
+                data.push(element);
+            }, this);
+        }
+    }
+
+    const config = {
+        cols: [{
+            caption: '',
+            type: 'string',
+            width: 40
+        }, {
+            caption: '',
+            type: 'string',
+            width: 70
+        }],
+        rows: data,
+        name: rawData['data[proyecto][nombre]'],
+        stylesXmlFile: 'styles/styles.xml'
+    };
+
+
+    excelExport.execute(config, (err, path) => {
+        if (err) {
+            console.error('Error creando el archivo xlsx');
+            console.error(err);
+
+            cleanup();
+        } else {
+            const file = fs.readFileSync(path);
+
+            if (!tempFolderId) {
+                drive.files.create({
+                    resource: {
+                        name: rawData['data[proyecto][nombre]'],
+                        mimeType: 'application/vnd.google-apps.folder',
+                        parents: [mainFolderId],
+                    },
+                    fields: 'id'
+                }, function(err, folder) {
+                    if (err) {
+                        console.error('Error creando la carpeta');
+                        console.error(err);
+
+                        cleanup();
+                    } else {
+                        console.log('Carpeta creada');
+                        uploadExcelFile(file, rawData['data[proyecto][nombre]'], path, folder.id);
+                    }
+                });
+            } else {
+                uploadExcelFile(file, rawData['data[proyecto][nombre]'], path, tempFolderId);
+            };
+        }
+    });
+}
+const uploadExcelFile = (file, fileName, filePath, folderId) => {
+    drive.files.create({
+        resource: {
+            name: fileName + '.xlsx',
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            parents: [folderId]
+        },
+        media: {
+            mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            body: file
+        }
+    }, function(err, file) {
+        if (err) {
+            console.error('Error al subir el archivo xlsx');
+            console.error(err);
+        } else {
+            fs.stat(filePath, function(err, stats) {
+                if (err) {
+                    console.error(err);
+                }
+
+                fs.unlink(filePath, function(err) {
+                    if (err) {
+                        console.error('Error al borrar el archivo xlsx');
+                        console.error(err);
+                    } else {
+                        console.log('Archivo xlsx borrado exitosamente');
+                        console.log('\n');
+                    }
+                });
+            });
+
+            console.log('File \'' + file.name + '\' uploaded to Google Drive');
+        }
+
+        cleanup();
+    });
+}
 
 
 var tempFolderParents;
@@ -167,11 +262,11 @@ app.use(bodyParser.urlencoded({
 app.use(fileUpload());
 
 
-app.options('/mail', function(req, res) {
+app.options('/project', function(req, res) {
     res.sendStatus(200);
 });
 
-app.post('/mail', function(req, res) {
+app.post('/project', function(req, res) {
     const recipient = 'laboratoriogobab@gmail.com';
     const sender = 'laboratoriogobab@gmail.com';
 
@@ -195,15 +290,6 @@ app.post('/mail', function(req, res) {
         html: emailString
     };
 
-    client.sendMail(email, function(err, info) {
-        if (err) {
-            console.error('Error al enviar el mail')
-            console.error(err);
-        } else {
-            console.log('Message sent: ' + req.body['data[proyecto][nombre]']);
-        }
-    });
-
     if (tempFolderId) {
         drive.files.update({
             fileId: tempFolderId,
@@ -215,14 +301,24 @@ app.post('/mail', function(req, res) {
             if (err) {
                 console.error('Error al renombrar la carpeta temporal');
                 console.error(err);
+
+                res.sendStatus(500);
+            }
+            else {
+                res.sendStatus(200);
             }
         });
     }
+    else {
+        res.sendStatus(200);
+    }
 
-    res.sendStatus(200);
 
-    postTask(req.body);
-    cleanup();
+    const parsedData = parseData(req.body);
+
+    sendEmail(client, email, req.body['data[proyecto][nombre]']);
+    postTask(req.body, parsedData);
+    generateExcelFile(req.body, parsedData);
 });
 
 app.options('/upload', function(req, res) {

@@ -76,7 +76,7 @@ class FormComponent extends Component {
     };
 
     this.state = this.initialState;
-    this.mailBackend = 'http://localhost:5000/mail'; //TODO: Replace this
+    this.projectBackend = 'http://localhost:5000/project'; //TODO: Replace this
     this.fileBackend = 'http://localhost:5000/upload'; //TODO: Replace this
     this.nombreProyecto = '';
     this.diagram = '';
@@ -227,7 +227,7 @@ class FormComponent extends Component {
       var promise = this.sendData(data);
 
       promise.then((value) => {
-        qwest.post(this.mailBackend, {
+        qwest.post(this.projectBackend, {
           data: data
         }, {
           cache: false
@@ -237,7 +237,7 @@ class FormComponent extends Component {
           this.reset();
         }.bind(this))
         .catch(function(e, xhr, response) {
-          alert('Hubo un error. No se pudo enviar el formulario.');
+          alert('Hubo un error y no se pudo enviar el formulario.\nIntente de nuevo.');
 
           console.error(e);
           console.dir(response);
@@ -291,10 +291,11 @@ class FormComponent extends Component {
       dropzone.removeAllFiles();
     }, this);
     this.formIsValid = false;
-    this.setState(this.initialState);
     this.diagram = '';
     this.documents = [];
     form.reset();
+
+    this.setState(this.initialState);
   }
 
   render() {
