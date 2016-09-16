@@ -16,11 +16,9 @@
     "google-auth-library": "^0.9.8",
     "googleapis": "^12.4.0",
     "jsonfile": "^2.3.1",
-    "le-table": "^6.1.2",
     "nodemailer": "^2.5.0",
     "nodemailer-sendgrid-transport": "^0.2.0",
     "qwest": "^4.4.5",
-    "utf8": "^2.1.1",
     "waterfall": "^1.0.0"
   }
 }
