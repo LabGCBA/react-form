@@ -4,10 +4,12 @@ import React, { Component } from 'react';
 import { GridForm, Fieldset, Row, Field } from 'react-gridforms';
 import firebase from 'config/firebase';
 import DropzoneComponent from 'react-dropzone-component';
+import ProgressButton from 'react-progress-button';
 
 const serialize = require('form-serialize');
 const shortid = require('shortid');
 const qwest = require('qwest');
+const ReactDOM = require('react-dom');
 
 class FormComponent extends Component {
   constructor(props) {
@@ -81,6 +83,7 @@ class FormComponent extends Component {
     this.documents = [];
     this.dropzones = [];
     this.formSent = false;
+    this.formIsValid = false;
 
     this.dropzoneConfig = {
       acceptedFiles: [
@@ -175,7 +178,9 @@ class FormComponent extends Component {
       dictCancelUpload: 'Cancelar',
       dictCancelUploadConfirmation: 'Cancelar la subida?',
       dictRemoveFile: 'Sacar',
-      dictInvalidFileType: 'Ese tipo de archivo no está permitido'
+      dictInvalidFileType: 'Ese tipo de archivo no está permitido',
+      acceptedFiles: 
+        'application/x-rar-compressed,application/zip,image/jpeg,image/png,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/pdf'
     };
 
     this.dropzoneJSConfig = Object.assign({}, this.dropzoneJSConfigBase, {
@@ -213,43 +218,42 @@ class FormComponent extends Component {
   }
 
   handleSubmit(e) {
-    e.preventDefault();
+    console.log('Inside handleSubmit()');
+    console.log('Before firing the submit event');
+    ReactDOM.findDOMNode(this.refs.form).dispatchEvent(new Event('submit'));
+    console.log('After firing the submit event');
+    console.log('The form validity state is: ' + this.formIsValid);
 
-    var data = serialize(e.target, { hash: true, empty: true });
-    
-    data.materialDeSoporte.diagrama = this.diagram;
-    data.materialDeSoporte.documentos = this.documents.join('\n');
-    if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
+    if (this.formIsValid) {
+      console.log('Inside the true branch of the if. Therefore, the form is valid');
+      var data = this.getData();
 
-    this.formSent = true;
+      this.formSent = true;
+      
+      var promise = this.sendData(data);
 
-    this.dropzones.forEach(function(dropzone) {
-      dropzone.removeAllFiles();
-    }, this);
-    document.getElementById("proyectos").reset();
-    this.setState(this.initialState);
-    this.diagram = '';
-    this.documents = [];
+      promise.then((value) => {
+        qwest.post(this.mailBackend, {
+          data: data,
+        }, {
+          cache: false
+        })
+        .then(function(xhr, response) {
+          this.formSent = false;
+          this.reset();
+        }.bind(this))
+        .catch(function(e, xhr, response) {
+          alert('Hubo un error. No se pudo enviar el formulario.');
 
-    this.sendData(data).then((value) => {
-      qwest.post(this.mailBackend, {
-        data: data,
-      }, {
-        cache: false
-      })
-      .then(function(xhr, response) {
-        alert('Formulario enviado exitosamente.');
+          console.error(e);
+          console.dir(response);
+          this.formSent = false;
+        }.bind(this));
+      });
 
-        this.formSent = false;
-      }.bind(this))
-      .catch(function(e, xhr, response) {
-        alert('Hubo un error. No se pudo enviar el formulario.');
-
-        console.error(e);
-        console.dir(response);
-        this.formSent = false;
-      }.bind(this));
-    });
+      console.log('Before promise return');
+      return promise;
+    }
   }
 
   handleNombreProyecto(e) {
@@ -262,11 +266,13 @@ class FormComponent extends Component {
 
       qwest.post(this.fileBackend, {
         all: true,
-      })
-      .then(function(xhr, response) {
-
       });
     }
+  }
+
+  validate(e) {
+    e.preventDefault;
+    this.formIsValid = true;
   }
 
   sendData(data) {
@@ -274,18 +280,46 @@ class FormComponent extends Component {
     return firebase.database().ref().child('/proyectos/').child(id).set(data);
   }
 
+  getData() {
+    var form = document.getElementById('proyectos'); 
+    var data = serialize(form, { hash: true, empty: true });
+    
+    data.materialDeSoporte.diagrama = this.diagram;
+    data.materialDeSoporte.documentos = this.documents.join('\n');
+    if (data.materialDeSoporte.links.length > 0) data.materialDeSoporte.links = data.materialDeSoporte.links.split( /\r?\n/ );
+
+    return data;
+  }
+
+  reset() {
+    var form = document.getElementById('proyectos'); 
+
+    this.dropzones.forEach(function(dropzone) {
+      dropzone.removeAllFiles();
+    }, this);
+    this.formIsValid = false;
+    this.setState(this.initialState);
+    this.diagram = '';
+    this.documents = [];
+    form.reset();
+  }
+
   render() {
     return (
       <div>
-        <GridForm id="proyectos" onSubmit={this.handleSubmit.bind(this)}>
+        <GridForm id="proyectos" ref="form" onSubmit={this.validate.bind(this)}>
           <Fieldset legend="Proyecto">
             <Row>
               <Field>
                 <label>Tipo</label>
-                <input id="YES_RADIO_New" name="proyecto[tipo]" value='Proyecto nuevo' type="radio" checked={this.state.YES_RADIO_New.checked} onChange={this.handleCheckbox.bind( this ) } />
-                <label htmlFor="YES_RADIO_New">Proyecto Nuevo</label>
-                <input id="NO_RADIO_New" name="proyecto[tipo]" value='Proyecto existente' type="radio" checked={this.state.NO_RADIO_New.checked} onChange={this.handleCheckbox.bind( this ) } />
-                <label htmlFor="NO_RADIO_New">Proyecto Existente</label>
+                <div className="radio-container">
+                  <input id="YES_RADIO_New" className="radiobox-focus" name="proyecto[tipo]" value='Proyecto nuevo' type="radio" checked={this.state.YES_RADIO_New.checked} onChange={this.handleCheckbox.bind( this ) } />
+                  <label htmlFor="YES_RADIO_New">Proyecto Nuevo</label>
+                </div>
+                <div className="radio-container">
+                  <input id="NO_RADIO_New" className="radiobox-focus" name="proyecto[tipo]" value='Proyecto existente' type="radio" checked={this.state.NO_RADIO_New.checked} onChange={this.handleCheckbox.bind( this ) } />
+                  <label htmlFor="NO_RADIO_New">Proyecto Existente</label>
+                </div>
               </Field>
               <Field span={2} className="required">
                 <label>Nombre</label>
@@ -418,9 +452,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Presupuesto asignado</label>
-                <input id="YES_RADIO_Budget" name="detallesAdicionales[presupuestoAsignado][]" value="Sí" checked={this.state.YES_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="YES_RADIO_Budget" className="radiobox-focus" name="detallesAdicionales[presupuestoAsignado][]" value="Sí" checked={this.state.YES_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="YES_RADIO_Budget">Sí</label>
-                <input id="NO_RADIO_Budget"name="detallesAdicionales[presupuestoAsignado][]"value="No" checked={this.state.NO_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="NO_RADIO_Budget" className="radiobox-focus" name="detallesAdicionales[presupuestoAsignado][]"value="No" checked={this.state.NO_RADIO_Budget.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="NO_RADIO_Budget">No</label>
               </Field>
               <Field span={3} className={this.toggleDisabled(this.state.NO_RADIO_Budget.checked, 'required')}>
@@ -431,9 +465,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere interacción con otras áreas o proyectos</label>
-                <input id="YES_RADIO_Interaction" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" value="Sí" checked={this.state.YES_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="YES_RADIO_Interaction" className="radiobox-focus" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" value="Sí" checked={this.state.YES_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="YES_RADIO_Interaction">Sí</label>
-                <input id="NO_RADIO_Interaction" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" value="No" checked={this.state.NO_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
+                <input id="NO_RADIO_Interaction" className="radiobox-focus" name="detallesAdicionales[requiereInteraccionConOtrasAreasOProyectos][]" value="No" checked={this.state.NO_RADIO_Interaction.checked} onChange={this.handleCheckbox.bind(this)} type="radio"/>
                 <label htmlFor="NO_RADIO_Interaction">No</label>
               </Field>
               <Field span={3} className={this.toggleDisabled(this.state.NO_RADIO_Interaction.checked, 'required')}>
@@ -464,9 +498,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere hardware</label>
-                <input id="YES_RADIO_Hardware" name="materialDeSoporte[requiereHardware][]" value="Sí" checked={this.state.YES_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Hardware" className="radiobox-focus" name="materialDeSoporte[requiereHardware][]" value="Sí" checked={this.state.YES_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Hardware">Sí</label>
-                <input id="NO_RADIO_Hardware" name="materialDeSoporte[requiereHardware][]" value="No" checked={this.state.NO_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Hardware" className="radiobox-focus" name="materialDeSoporte[requiereHardware][]" value="No" checked={this.state.NO_RADIO_Hardware.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Hardware">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Hardware.checked)}>
@@ -478,9 +512,9 @@ class FormComponent extends Component {
               </Field>
               <Field>
                 <label>Requiere infraestructura</label>
-                <input id="YES_RADIO_Infrastructure" name="materialDeSoporte[requiereInfraestructura][]" value="Sí" checked={this.state.YES_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Infrastructure" className="radiobox-focus" name="materialDeSoporte[requiereInfraestructura][]" value="Sí" checked={this.state.YES_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Infrastructure">Sí</label>
-                <input id="NO_RADIO_Infrastructure" name="materialDeSoporte[requiereInfraestructura][]" value="No" checked={this.state.NO_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Infrastructure" className="radiobox-focus" name="materialDeSoporte[requiereInfraestructura][]" value="No" checked={this.state.NO_RADIO_Infrastructure.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Infrastructure">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Infrastructure.checked)}>
@@ -494,9 +528,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere webservices</label>
-                <input id="YES_RADIO_WebServices" name="materialDeSoporte[requiereWebServices][]" value="Sí" checked={this.state.YES_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_WebServices" className="radiobox-focus" name="materialDeSoporte[requiereWebServices][]" value="Sí" checked={this.state.YES_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_WebServices">Sí</label>
-                <input id="NO_RADIO_WebServices" name="materialDeSoporte[requiereWebServices][]" value="No" checked={this.state.NO_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_WebServices" className="radiobox-focus" name="materialDeSoporte[requiereWebServices][]" value="No" checked={this.state.NO_RADIO_WebServices.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_WebServices">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_WebServices.checked)}>
@@ -508,9 +542,9 @@ class FormComponent extends Component {
               </Field>
               <Field>
                 <label>Requiere diseño</label>
-                <input id="YES_RADIO_Design" name="materialDeSoporte[requiereDiseno][]" value="Sí" checked={this.state.YES_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Design" className="radiobox-focus" name="materialDeSoporte[requiereDiseno][]" value="Sí" checked={this.state.YES_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Design">Sí</label>
-                <input id="NO_RADIO_Design" name="materialDeSoporte[requiereDiseno][]" value="No" checked={this.state.NO_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Design" className="radiobox-focus" name="materialDeSoporte[requiereDiseno][]" value="No" checked={this.state.NO_RADIO_Design.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Design">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Design.checked)}>
@@ -524,9 +558,9 @@ class FormComponent extends Component {
             <Row>
               <Field>
                 <label>Requiere contenido</label>
-                <input id="YES_RADIO_Content" name="materialDeSoporte[requiereContenido][]" value="Sí" checked={this.state.YES_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Content" className="radiobox-focus" name="materialDeSoporte[requiereContenido][]" value="Sí" checked={this.state.YES_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Content">Sí</label>
-                <input id="NO_RADIO_Content" name="materialDeSoporte[requiereContenido][]" value="No" checked={this.state.NO_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Content" className="radiobox-focus" name="materialDeSoporte[requiereContenido][]" value="No" checked={this.state.NO_RADIO_Content.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Content">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Content.checked)}>
@@ -538,9 +572,9 @@ class FormComponent extends Component {
               </Field>
               <Field>
                 <label>Requiere instalación</label>
-                <input id="YES_RADIO_Installation" name="materialDeSoporte[requiereInstalacion][]" value="Sí" checked={this.state.YES_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="YES_RADIO_Installation" className="radiobox-focus" name="materialDeSoporte[requiereInstalacion][]" value="Sí" checked={this.state.YES_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="YES_RADIO_Installation">Sí</label>
-                <input id="NO_RADIO_Installation" name="materialDeSoporte[requiereInstalacion][]" value="No" checked={this.state.NO_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
+                <input id="NO_RADIO_Installation" className="radiobox-focus" name="materialDeSoporte[requiereInstalacion][]" value="No" checked={this.state.NO_RADIO_Installation.checked} onChange={this.handleCheckbox.bind( this ) } type="radio"/>
                 <label htmlFor="NO_RADIO_Installation">No</label>
               </Field>
               <Field className={this.toggleDisabled(this.state.NO_RADIO_Installation.checked)}>
@@ -554,8 +588,10 @@ class FormComponent extends Component {
           </Fieldset>
         </GridForm>
         <div className="u-center-block">
-          <div className="u-center-block__content u-center-block__content--horizontal">
-            <button type="submit" form="proyectos" className="c-button c-button--block c-button--ghost c-button--large c-button--submit">Enviar</button>
+            <div className="u-center-block__content u-center-block__content--horizontal">
+            <ProgressButton onClick={this.handleSubmit.bind(this)} shouldAllowClickOnLoading={false}>
+              Enviar
+            </ProgressButton>
           </div>
         </div>
       </div>

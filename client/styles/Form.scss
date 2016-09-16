@@ -8,6 +8,9 @@ $rowHeight: 20px;
 }
 
 .grid-form {
+  max-width: 90%;
+  margin-left: 5%;
+
   div[data-row-span] {
     display: flex;
     flex-wrap: wrap;
@@ -109,6 +112,19 @@ $rowHeight: 20px;
     float: left;
   }
 
+  .radio-container {
+    display: inline-block;
+    margin-right: 10px;
+
+    label {
+      white-space: nowrap;
+    }
+  }
+
+  .radio-container::last-of-type {
+    margin-right: 0px;
+  }
+
   .filepicker {
     border-radius: 0px;
     min-height: 100px;
@@ -137,26 +153,144 @@ $rowHeight: 20px;
   }
 }
 
-.c-button--submit {
-  color: $foreground;
-  font-size: 15px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  border: 1px solid $foreground;
-  border-radius: 0px;
-  width: 20vw;
-  margin-top: $rowHeight;
-  margin-bottom: 40px;
+.pb-container {
+  display: inline-block;
+  text-align: center;
+  width: 100%;
+  .pb-button {
+    background: transparent;
+    border: 2px solid currentColor;
+    border-radius: 27px;
+    color: currentColor;
+    cursor: pointer;
+    padding: 0.7em 1em;
+    margin-bottom: 4em;
+    text-decoration: none;
+    text-align: center;
+    height: 54px;
+    width: 250px;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    transition: background-color 0.3s, width 0.3s, border-width 0.3s, border-color 0.3s, border-radius 0.3s;
+    span {
+      display: inherit;
+      transition: opacity 0.3s 0.1s;
+      font-size: 2em;
+      font-weight: 100;
+    }
+    svg {
+      height: 54px;
+      width: 54px;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      path {
+        opacity: 0;
+        fill: none;
+      }
+      &.pb-progress-circle {
+        animation: spin 0.9s infinite cubic-bezier(0.085, 0.26, 0.935, 0.71);
+        path {
+          stroke: currentColor;
+          stroke-width: 5;
+        }
+      }
+      &.pb-checkmark path, &.pb-cross path {
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-width: 4;
+      }
+    }
+  }
+  &.disabled .pb-button {
+    cursor: not-allowed;
+  }
+  &.loading .pb-button {
+    width: 54px;
+    border-width: 6.5px;
+    border-color: #ddd;
+    cursor: wait;
+    background-color: transparent;
+    padding: 0;
+    span {
+      transition: all 0.15s;
+      opacity: 0;
+      display: none;
+    }
+    .pb-progress-circle > path {
+      transition: opacity 0.15s 0.3s;
+      opacity: 1;
+    }
+  }
+  &.success .pb-button {
+    border-color: #A0D468;
+    background-color: #A0D468;
+    span {
+      transition: all 0.15s;
+      opacity: 0;
+      display: none;
+    }
+    .pb-checkmark > path {
+      opacity: 1;
+    }
+  }
+  &.error .pb-button {
+    border-color: #ED5565;
+    background-color: #ED5565;
+    span {
+      transition: all 0.15s;
+      opacity: 0;
+      display: none;
+    }
+    .pb-cross > path {
+      opacity: 1;
+    }
+  }
 }
 
-.c-button--submit:not(:disabled):hover {
-  background: $foreground !important;
-  color: $background !important;
+@keyframes spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+    transform-origin: center center;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+    transform-origin: center center;
+  }
 }
 
-.c-button--submit:not(:disabled):focus, .c-button--submit:not(:disabled):active {
-  box-shadow: inset 0 0 0 0px;
-  border-color: $foreground;
-  background: $background;
-  color: $foreground;
+/*
+ * radiobox.css
+ * v1.0.1
+ * 
+ * Tiny set of CSS3 animations for your radio inputs.
+ * https://github.com/720kb/
+ * 
+ * MIT license
+ * Thu Sep 15 2016
+ */
+
+@keyframes focus {
+  0% {
+    opacity: .4;
+    transform: scale(3);
+  }
+
+  10% {
+    transform: scale(2.5);
+  }
+
+  90% {
+    transform: scale(1);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+.radiobox-focus {
+  &:checked {
+    animation: focus .25s ease-out;
+  }
 }

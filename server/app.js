@@ -8,7 +8,6 @@ const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
 const request = require('request');
-const utf8 = require('utf8');
 
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
@@ -40,7 +39,6 @@ const cleanup = function() {
     fileIds = [];
 };
 
-const Table = require('le-table');
 const changeCase = require('change-case');
 const teamworkRequest = (method, path, options) => {
     const user = 'gobiernodelaciudaddebuenosaires';
