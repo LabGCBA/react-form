@@ -228,7 +228,7 @@ class FormComponent extends Component {
 
       promise.then((value) => {
         qwest.post(this.mailBackend, {
-          data: data,
+          data: data
         }, {
           cache: false
         })
@@ -275,7 +275,7 @@ class FormComponent extends Component {
 
   getData() {
     var form = document.getElementById('proyectos'); 
-    var data = serialize(form, { hash: true, empty: true });
+    var data = serialize(form, {hash: true, empty: true});
     
     data.materialDeSoporte.diagrama = this.diagram;
     data.materialDeSoporte.documentos = this.documents.join('\n');
