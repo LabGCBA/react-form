@@ -1,4 +1,5 @@
 /*jshint esnext: true */
+"use strict";
 
 const express = require('express');
 const app = express();
@@ -6,8 +7,12 @@ const bodyParser = require('body-parser');
 const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
+const request = require('request');
+const utf8 = require('utf8');
+
 const nodemailer = require('nodemailer');
 const sgTransport = require('nodemailer-sendgrid-transport');
+
 const fileUpload = require('express-fileupload');
 const google = require('googleapis');
 const auth = require(path.join(__dirname, 'modules', 'drive'));
@@ -34,6 +39,119 @@ const cleanup = function() {
     tempFolderId = undefined;
     fileIds = [];
 };
+
+const Table = require('le-table');
+const changeCase = require('change-case');
+const teamworkRequest = (method, path, options) => {
+    const user = 'gobiernodelaciudaddebuenosaires';
+    const token = 'table592rice';
+    const auth = new Buffer(token + ':xxx').toString('base64');
+
+    const base = {
+        uri: 'http://' + user + '.teamwork.com' + path,
+        method: method,
+        encoding: 'utf8',
+        followRedirect: true,
+        headers: {
+            'Authorization': 'BASIC ' + auth,
+            'Content-Type': 'application/json'
+        }
+    };
+
+    return Object.assign({}, base, options);
+};
+const parseData = (data) => {
+    const regex = /\[(.*?)\]/g;
+    var result = {};
+
+    for (var property in data) {
+        if (data.hasOwnProperty(property)) {
+            let keys = [];
+            let propertyCopy = property + '';
+
+            propertyCopy.replace(/\[(.*?)\]/g, function(g0, g1) {
+                keys.push(changeCase.sentenceCase(g1));
+            });
+
+            if (keys[keys.length - 1] === '') keys.pop();
+            if (result[keys[0]]) {
+                const length = data[property].length;
+                var counter = 0;
+                var content = data[property].split(' ');
+
+                content.forEach(function(element, i) {
+                    counter += element.length;
+
+                    if (element === '') {
+                        content.splice(i, 1);
+                    }
+                    else {
+                        if (counter > 80) {
+                            content[i] = element + '\n';
+                            counter = 0;
+                        }
+                    }
+                }, this);
+
+                content = content.join(' ');
+
+                result[keys[0]].push([keys[1], content]);
+                // result[keys[0]].push([keys[1], data[property]]);
+            } else {
+                result[keys[0]] = [];
+            };
+        }
+    }
+
+    console.dir(result);
+
+    return result;
+};
+const renderData = (data) => {
+    var result = '';
+    var parsedData = parseData(data);
+
+    for (var property in parsedData) {
+        if (parsedData.hasOwnProperty(property)) {            
+            result += '\n\n' + property + '\n\n';
+            parsedData[property].forEach(function(element) {
+                result += element[0] + ': ' + element[1] + '\n';
+            }, this);
+        }
+    }
+
+    return result;
+};
+
+const postTask = (data) => {
+    const tasklistId = '964678';
+    const projectId = '303503';
+    const userId = '234141';
+    const path = `/tasklists/${tasklistId}/tasks.json`;
+    const payload = {
+        json: {
+            "todo-item": {
+                "content": data['data[proyecto][nombre]'],
+                "responsible-party-id": userId,
+                "notify": true,
+                "description": renderData(data),
+                "positionAfterTask": -1
+            }
+        }
+    };
+    const requestData = teamworkRequest('POST', path, payload);
+
+    var req = request(requestData, function (err, res, body) {
+        if (err) {
+            console.error('Error al enviar la task a TeamWork: ', err);
+        }
+        else {
+            if (body['STATUS'] === 'OK') console.log('Proyecto enviado a TeamWork.');
+            else console.error('Error al enviar la task a TeamWork: ', body['STATUS']);
+        }
+    });
+};
+
 
 var tempFolderParents;
 var tempFolderId;
@@ -90,22 +208,25 @@ app.post('/mail', function(req, res) {
         }
     });
 
-    drive.files.update({
-        fileId: tempFolderId,
-        resource: {'name': req.body['data[proyecto][nombre]']},
-        fields: 'id'
-    }, function(err, file) {
-        if (err) {
-            console.error('Error al renombrar la carpeta temporal');
-            console.error(err);
+    if (tempFolderId) {
+        drive.files.update({
+            fileId: tempFolderId,
+            resource: {
+                'name': req.body['data[proyecto][nombre]']
+            },
+            fields: 'id'
+        }, function(err, file) {
+            if (err) {
+                console.error('Error al renombrar la carpeta temporal');
+                console.error(err);
+            }
+        });
+    }
 
-            res.sendStatus(500);
-        } else {
-            res.sendStatus(200);
-        }
+    res.sendStatus(200);
 
-        cleanup();
-    });
+    postTask(req.body);
+    cleanup();
 });
 
 app.options('/upload', function(req, res) {
@@ -153,8 +274,8 @@ app.post('/upload', function(req, res) {
                             filesUploaded = 0;
 
                             res.sendStatus(201);
-                            setTimeout(function(){ 
-                                cleanup(); 
+                            setTimeout(function() {
+                                cleanup();
                             }, 180000);
                         }
                     };
