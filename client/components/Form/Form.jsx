@@ -218,18 +218,12 @@ class FormComponent extends Component {
   }
 
   handleSubmit(e) {
-    console.log('Inside handleSubmit()');
-    console.log('Before firing the submit event');
     ReactDOM.findDOMNode(this.refs.form).dispatchEvent(new Event('submit'));
-    console.log('After firing the submit event');
-    console.log('The form validity state is: ' + this.formIsValid);
 
     if (this.formIsValid) {
-      console.log('Inside the true branch of the if. Therefore, the form is valid');
-      var data = this.getData();
-
       this.formSent = true;
-      
+
+      var data = this.getData();
       var promise = this.sendData(data);
 
       promise.then((value) => {
@@ -251,7 +245,6 @@ class FormComponent extends Component {
         }.bind(this));
       });
 
-      console.log('Before promise return');
       return promise;
     }
   }
