@@ -74,7 +74,7 @@ const parseData = (data) => {
     var result = {};
 
     for (var property in data) {
-        if (data.hasOwnProperty(property)) {
+        if (Object.prototype.hasOwnProperty.call(data, property)) {
             let keys = [];
             let propertyCopy = property + '';
 
