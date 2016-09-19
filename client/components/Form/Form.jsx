@@ -174,7 +174,6 @@ class FormComponent extends Component {
     this.dropzoneJSConfigBase = {
       maxfilesize: 200,
       addRemoveLinks: true,
-      dictDefaultMessage: 'Arrastrar un archivo aquí (o hacer click para buscarlo)',
       dictCancelUpload: 'Cancelar',
       dictCancelUploadConfirmation: 'Cancelar la subida?',
       dictRemoveFile: 'Sacar',
@@ -184,11 +183,13 @@ class FormComponent extends Component {
     };
 
     this.dropzoneJSConfig = Object.assign({}, this.dropzoneJSConfigBase, {
+      dictDefaultMessage: 'Arrastrar un archivo aquí (o hacer click para buscarlo)',
       uploadMultiple: false,
       maxFiles: 1,
     });
 
     this.dropzoneJSConfigMulti = Object.assign({}, this.dropzoneJSConfigBase, {
+      dictDefaultMessage: 'Arrastrar archivos aquí (o hacer click para buscarlos)',
       uploadMultiple: true
     });
   }
